@@ -1,0 +1,12 @@
+{
+  "name": "samsung-device-scraper",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:kulcsarrudolf/samsung-device-scraper.git",
+  "author": "kulcsarrudolf <kulcsarrudolf@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.2",
+    "cheerio": "^1.0.0-rc.12"
+  }
+}

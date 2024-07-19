@@ -46,35 +46,43 @@ const parseDate = (dateString) => {
   return null;
 };
 
+const fetchData = async (url) => {
+  try {
+    console.log(`Fetching URL: ${url} at ${new Date().toISOString()}`);
+    const response = await axios.get(url);
+    await new Promise((resolve) => setTimeout(resolve, 1 * 60 * 1000)); // Wait for 1 minute
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching URL: ${url} at ${new Date().toISOString()}`);
+    console.error(error.message);
+    await waitWithExponentialBackoff();
+    return fetchData(url); // Retry the request
+  }
+};
+
 const getAllSamsungModelsLinkFromOnePage = async (pageNumber = 1) => {
   try {
-    const response = await axios.get(
-      `${BASE_URL}/samsung-phones-f-9-0-p${pageNumber}.php`
-    );
-    const html = response.data;
+    const url = `${BASE_URL}/samsung-phones-f-9-0-p${pageNumber}.php`;
+    const html = await fetchData(url);
     const $ = cheerio.load(html);
 
     const urls = [];
     $(".makers ul li a").each((index, element) => {
       const modelUrl = $(element).attr("href");
-
-      let fullModelUrl = `${BASE_URL}/${modelUrl}`;
-
+      const fullModelUrl = `${BASE_URL}/${modelUrl}`;
       urls.push(fullModelUrl);
     });
 
     return urls;
   } catch (error) {
     console.log("Too many requests, please wait before next request");
-    await waitWithExponentialBackoff();
     return getAllSamsungModelsLinkFromOnePage(pageNumber); // Retry the request
   }
 };
 
 const getSamsungModelDetails = async (modelUrl) => {
   try {
-    const response = await axios.get(modelUrl);
-    const html = response.data;
+    const html = await fetchData(modelUrl);
     const $ = cheerio.load(html);
 
     const statusText = $(".ttl")
@@ -100,27 +108,8 @@ const getSamsungModelDetails = async (modelUrl) => {
     return model;
   } catch (error) {
     console.error(error.message);
-
-    console.log(JSON.stringify(error));
-
-    await waitWithExponentialBackoff();
     return getSamsungModelDetails(modelUrl); // Retry the request
   }
-};
-
-const waitWithExponentialBackoff = (() => {
-  let attempts = 0;
-
-  return async () => {
-    const waitTime = Math.min(10000 * Math.pow(2, attempts), 60000); // Cap the wait time at 60 seconds
-    console.log(`Waiting for ${waitTime / 1000} seconds before retrying...`);
-    await new Promise((resolve) => setTimeout(resolve, waitTime));
-    attempts += 1;
-  };
-})();
-
-const clearAttempts = () => {
-  waitWithExponentialBackoff.attempts = 0;
 };
 
 const main = async () => {
@@ -137,18 +126,10 @@ const main = async () => {
 
       for (let j = 0; j < models.length; j++) {
         const details = await getSamsungModelDetails(models[j]);
-        await new Promise(
-          (resolve) => setTimeout(resolve, 60000) // Fixed delay of 60 seconds
-        );
         currentPagePhones.push(details);
-        clearAttempts(); // Clear attempts after a successful request
       }
 
       phones.push(...currentPagePhones);
-
-      await new Promise(
-        (resolve) => setTimeout(resolve, 60000) // Fixed delay of 60 seconds
-      );
     }
 
     writeObjectToFile(phones, "samsung-phones.json");

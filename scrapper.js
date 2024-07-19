@@ -1,26 +1,20 @@
 const axios = require("axios");
 const cheerio = require("cheerio");
+const fs = require("fs");
 
 const BASE_URL = "https://www.gsmarena.com";
 
-const writeObjectToFile = (object, fileName) => {
-  const fs = require("fs");
-  fs.writeFileSync
-    ? fs.writeFileSync
-    : fs.writeFile(
-        fileName,
-        JSON.stringify(object, null, 2),
-        { flag: "w" },
-        (err) => {
-          if (err) {
-            console.error(err);
-          }
-        }
-      );
-};
-
-const getRandomBetween = (min, max) => {
-  return Math.floor(Math.random() * (max - min + 1) + min);
+const writeObjectToFile = (object, fileName, callback) => {
+  const data = JSON.stringify(object, null, 2);
+  if (callback) {
+    fs.writeFile(fileName, data, { flag: "w" }, callback);
+  } else {
+    try {
+      fs.writeFileSync(fileName, data, { flag: "w" });
+    } catch (err) {
+      console.error(err);
+    }
+  }
 };
 
 const parseDate = (dateString) => {
@@ -71,10 +65,9 @@ const getAllSamsungModelsLinkFromOnePage = async (pageNumber = 1) => {
 
     return urls;
   } catch (error) {
-    console.log("Too many requests, please wait 10s before next request");
-    console.log("pageNumber", pageNumber);
-
-    return [];
+    console.log("Too many requests, please wait before next request");
+    await waitWithExponentialBackoff();
+    return getAllSamsungModelsLinkFromOnePage(pageNumber); // Retry the request
   }
 };
 
@@ -106,66 +99,62 @@ const getSamsungModelDetails = async (modelUrl) => {
 
     return model;
   } catch (error) {
-    // console.error("Error fetching Samsung model details ", modelUrl);
     console.error(error.message);
 
     console.log(JSON.stringify(error));
 
-    return {};
+    await waitWithExponentialBackoff();
+    return getSamsungModelDetails(modelUrl); // Retry the request
   }
 };
-// Example usage:
-(async () => {
-  try {
-    // get for first 7 pages
 
+const waitWithExponentialBackoff = (() => {
+  let attempts = 0;
+
+  return async () => {
+    const waitTime = Math.min(10000 * Math.pow(2, attempts), 60000); // Cap the wait time at 60 seconds
+    console.log(`Waiting for ${waitTime / 1000} seconds before retrying...`);
+    await new Promise((resolve) => setTimeout(resolve, waitTime));
+    attempts += 1;
+  };
+})();
+
+const clearAttempts = () => {
+  waitWithExponentialBackoff.attempts = 0;
+};
+
+const main = async () => {
+  try {
     const phones = [];
 
-    const allModelsUrl = [];
-    // for (let i = 1; i <= 1; i++) {
-    //   console.log("Page Number: ", i);
-    //   const models = await getAllSamsungModelsLinkFromOnePage(i);
+    for (let i = 1; i <= 1; i++) {
+      console.log("Page Number: ", i);
+      const models = await getAllSamsungModelsLinkFromOnePage(i);
 
-    //   console.log(models);
+      console.log(models);
 
-    //   const currentPagePhones = [];
+      const currentPagePhones = [];
 
-    //   const details = await getSamsungModelDetails(allModelsUrl[0]);
-    //   // await new Promise((resolve) =>
-    //   //   setTimeout(resolve, getRandomBetween(10000, 20000))
-    //   // );
-    //   currentPagePhones.push(...details);
-    //   writeObjectToFile(currentPagePhones, `samsung-phones-page${i}.json`);
+      for (let j = 0; j < models.length; j++) {
+        const details = await getSamsungModelDetails(models[j]);
+        await new Promise(
+          (resolve) => setTimeout(resolve, 60000) // Fixed delay of 60 seconds
+        );
+        currentPagePhones.push(details);
+        clearAttempts(); // Clear attempts after a successful request
+      }
 
-    //   allModelsUrl.push(...(models || []));
+      phones.push(...currentPagePhones);
 
-    //   // await new Promise((resolve) =>
-    //   //   setTimeout(resolve, getRandomBetween(30000, 32000))
-    //   // );
+      await new Promise(
+        (resolve) => setTimeout(resolve, 60000) // Fixed delay of 60 seconds
+      );
+    }
 
-    //   phones.push(...currentPagePhones);
-    //   // wait 30s before next request
-    // }
-
-    const x = await getSamsungModelDetails(
-      "https://www.gsmarena.com/samsung_galaxy_z_fold6-13147.php"
-    );
-
-    writeObjectToFile(x, "samsung-phones.json");
-
-    // const details = await getSamsungModelDetails(allModelsUrl[0]);
-    // console.log(details);
-
-    // allModelsUrl.forEach(async (modelUrl) => {
-    //   const details = await getSamsungModelDetails(modelUrl);
-    //   console.log(details);
-    //   // wait 10s before next request
-
-    //   await new Promise((resolve) => setTimeout(resolve, 10000));
-    // });
-
-    console.log("All Samsung Models:", allModelsUrl.length);
+    writeObjectToFile(phones, "samsung-phones.json");
   } catch (error) {
     console.error(error.message);
   }
-})();
+};
+
+main();

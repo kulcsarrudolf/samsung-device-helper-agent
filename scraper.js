@@ -1,4 +1,4 @@
-const axios = require("axios");
+const puppeteer = require("puppeteer");
 const cheerio = require("cheerio");
 const fs = require("fs");
 
@@ -47,17 +47,15 @@ const parseDate = (dateString) => {
 };
 
 const fetchData = async (url) => {
-  try {
-    console.log(`Fetching URL: ${url} at ${new Date().toISOString()}`);
-    const response = await axios.get(url);
-    await new Promise((resolve) => setTimeout(resolve, 1 * 60 * 1000)); // Wait for 1 minute
-    return response.data;
-  } catch (error) {
-    console.error(`Error fetching URL: ${url} at ${new Date().toISOString()}`);
-    console.error(error.message);
-    await waitWithExponentialBackoff();
-    return fetchData(url); // Retry the request
-  }
+  const wait = Math.floor(Math.random() * 60000) + 60000;
+  await new Promise((resolve) => setTimeout(resolve, wait));
+
+  const browser = await puppeteer.launch({ headless: true });
+  const page = await browser.newPage();
+  await page.goto(url, { waitUntil: "networkidle2" });
+  const content = await page.content();
+  await browser.close();
+  return content;
 };
 
 const getAllSamsungModelsLinkFromOnePage = async (pageNumber = 1) => {
@@ -75,6 +73,8 @@ const getAllSamsungModelsLinkFromOnePage = async (pageNumber = 1) => {
 
     return urls;
   } catch (error) {
+    console.error(error.message);
+    console.log(error);
     console.log("Too many requests, please wait before next request");
     return getAllSamsungModelsLinkFromOnePage(pageNumber); // Retry the request
   }
@@ -125,8 +125,11 @@ const main = async () => {
       const currentPagePhones = [];
 
       for (let j = 0; j < models.length; j++) {
+        console.log("Model Number: ", j);
         const details = await getSamsungModelDetails(models[j]);
         currentPagePhones.push(details);
+        console.log(JSON.stringify(details));
+        writeObjectToFile(details, `samsung-phones-${i}-${j}.json`);
       }
 
       phones.push(...currentPagePhones);

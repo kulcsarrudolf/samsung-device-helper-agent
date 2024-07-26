@@ -47,7 +47,7 @@ const parseDate = (dateString) => {
 };
 
 const fetchData = async (url) => {
-  const wait = Math.floor(Math.random() * 60000) + 60000;
+  const wait = Math.floor(Math.random() * 10000) + 5000;
   await new Promise((resolve) => setTimeout(resolve, wait));
 
   const browser = await puppeteer.launch({ headless: true });
@@ -116,26 +116,26 @@ const main = async () => {
   try {
     const phones = [];
 
-    for (let i = 1; i <= 1; i++) {
-      console.log("Page Number: ", i);
+    for (let i = 1; i <= 6; i++) {
       const models = await getAllSamsungModelsLinkFromOnePage(i);
 
-      console.log(models);
-
       const currentPagePhones = [];
+      const totalModels = models.length;
 
-      for (let j = 0; j < models.length; j++) {
-        console.log("Model Number: ", j);
+      for (let j = 0; j < totalModels; j++) {
         const details = await getSamsungModelDetails(models[j]);
         currentPagePhones.push(details);
         console.log(JSON.stringify(details));
-        writeObjectToFile(details, `samsung-phones-${i}-${j}.json`);
       }
 
       phones.push(...currentPagePhones);
+      writeObjectToFile(phones, `samsung-phones-page-${i}.json`);
     }
 
-    writeObjectToFile(phones, "samsung-phones.json");
+    writeObjectToFile(
+      phones,
+      `samsung-phones${Math.floor(Date.now() / 1000)}.json`
+    );
   } catch (error) {
     console.error(error.message);
   }

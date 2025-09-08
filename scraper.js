@@ -47,7 +47,7 @@ const parseDate = (dateString) => {
 };
 
 const fetchData = async (url) => {
-  const wait = Math.floor(Math.random() * 10000) + 5000;
+  const wait = Math.floor(Math.random() * 2000) + 1000;
   await new Promise((resolve) => setTimeout(resolve, wait));
 
   const browser = await puppeteer.launch({ headless: true });
@@ -116,16 +116,21 @@ const main = async () => {
   try {
     const phones = [];
 
-    for (let i = 1; i <= 6; i++) {
+    for (let i = 1; i <= 1; i++) {
       const models = await getAllSamsungModelsLinkFromOnePage(i);
 
       const currentPagePhones = [];
       const totalModels = models.length;
+      const maxModels = Math.min(10, totalModels);
 
-      for (let j = 0; j < totalModels; j++) {
+      console.log(
+        `Scraping ${maxModels} out of ${totalModels} models from page ${i}`
+      );
+
+      for (let j = 0; j < maxModels; j++) {
         const details = await getSamsungModelDetails(models[j]);
         currentPagePhones.push(details);
-        console.log(JSON.stringify(details));
+        console.log(`Model ${j + 1}/${maxModels}:`, JSON.stringify(details));
       }
 
       phones.push(...currentPagePhones);

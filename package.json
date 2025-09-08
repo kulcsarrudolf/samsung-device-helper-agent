@@ -8,6 +8,7 @@
   "dependencies": {
     "axios": "^1.7.2",
     "cheerio": "^1.0.0-rc.12",
-    "puppeteer": "^22.13.1"
+    "puppeteer": "^22.13.1",
+    "samsung-device-helper": "^0.0.13"
   }
 }

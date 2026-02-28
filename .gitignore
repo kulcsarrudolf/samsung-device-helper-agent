@@ -20,6 +20,9 @@ missing-samsung-models.json
 # Windows
 Thumbs.db
 
+# Claude
+.claude/
+
 # Yarn
 .yarn/
 

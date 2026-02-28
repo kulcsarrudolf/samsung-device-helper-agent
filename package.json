@@ -1,12 +1,12 @@
 {
-  "name": "samsung-device-scraper",
+  "name": "samsung-device-helper-agent",
   "version": "1.0.0",
   "type": "module",
   "engines": {
     "node": ">=24"
   },
   "packageManager": "yarn@4.6.0",
-  "repository": "git@github.com:kulcsarrudolf/samsung-device-scraper.git",
+  "repository": "git@github.com:kulcsarrudolf/samsung-device-helper-agent.git",
   "author": "kulcsarrudolf <kulcsarrudolf@gmail.com>",
   "license": "MIT",
   "scripts": {

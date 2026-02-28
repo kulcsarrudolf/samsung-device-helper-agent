@@ -2409,16 +2409,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"samsung-device-helper@npm:^0.0.13":
-  version: 0.0.13
-  resolution: "samsung-device-helper@npm:0.0.13"
-  checksum: 10c0/bf9bc4beeb98d4d86230d64e1dd3ff60b65083faf462ee32e2b682dcc511d54e479db118f31c2552e97bd234745e98340c11858d8837baa95c7d736f721cb829
-  languageName: node
-  linkType: hard
-
-"samsung-device-scraper@workspace:.":
+"samsung-device-helper-agent@workspace:.":
   version: 0.0.0-use.local
-  resolution: "samsung-device-scraper@workspace:."
+  resolution: "samsung-device-helper-agent@workspace:."
   dependencies:
     "@types/node": "npm:^22.0.0"
     cheerio: "npm:^1.0.0-rc.12"
@@ -2432,6 +2425,13 @@ __metadata:
     typescript-eslint: "npm:^8.0.0"
   languageName: unknown
   linkType: soft
+
+"samsung-device-helper@npm:^0.0.13":
+  version: 0.0.13
+  resolution: "samsung-device-helper@npm:0.0.13"
+  checksum: 10c0/bf9bc4beeb98d4d86230d64e1dd3ff60b65083faf462ee32e2b682dcc511d54e479db118f31c2552e97bd234745e98340c11858d8837baa95c7d736f721cb829
+  languageName: node
+  linkType: hard
 
 "semver@npm:^7.3.5, semver@npm:^7.7.3":
   version: 7.7.4

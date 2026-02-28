@@ -10,8 +10,7 @@
   "author": "kulcsarrudolf <kulcsarrudolf@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "scrape": "tsx src/scraper.ts",
-    "compare": "tsx src/compare.ts",
+    "sync": "tsx src/sync/index.ts",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",

@@ -1,16 +1,8 @@
 services:
-  scraper:
+  sync:
     build: .
-    volumes:
-      - ./.output:/app/.output
     environment:
-      - SCRAPER_PAGES=1
-      - SCRAPER_MAX_MODELS=8
-
-  compare:
-    build: .
-    volumes:
-      - ./.output:/app/.output
-    command: node dist/compare.js
-    environment:
-      - SCRAPE_FILE=samsung-phones-page-1.json
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - REPO_OWNER=${REPO_OWNER:-kulcsarrudolf}
+      - REPO_NAME=${REPO_NAME:-samsung-device-helper}

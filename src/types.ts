@@ -16,9 +16,3 @@ export interface ScraperConfig {
   pages: number;
   maxModelsPerPage: number;
 }
-
-export interface LibraryDevice {
-  name: string;
-  releaseDate?: string;
-  models?: string[];
-}

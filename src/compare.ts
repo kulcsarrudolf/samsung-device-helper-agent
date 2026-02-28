@@ -3,8 +3,9 @@ import {
   getAllSamsungTablets,
   getAllSamsungWatches,
   getAllSamsungDevices,
+  type LibraryDevice,
 } from 'samsung-device-helper';
-import type { SamsungDevice, MissingDevicesReport, LibraryDevice } from './types.js';
+import type { SamsungDevice, MissingDevicesReport } from './types.js';
 import { readOutput, writeOutput } from './utils.js';
 
 const SCRAPE_FILE = process.env.SCRAPE_FILE ?? 'samsung-phones-page-1.json';
@@ -68,21 +69,19 @@ function isInLibrary(
     }
   }
 
-  if (scraped.models) {
-    for (const model of scraped.models) {
-      const found = byModel.get(model);
-      if (found) return found;
-    }
+  for (const model of scraped.models) {
+    const found = byModel.get(model);
+    if (found) return found;
   }
 
   return null;
 }
 
 async function main(): Promise<void> {
-  const existingPhones = getAllSamsungPhones() as LibraryDevice[];
-  const existingTablets = getAllSamsungTablets() as LibraryDevice[];
-  const existingWatches = getAllSamsungWatches() as LibraryDevice[];
-  const allDevices = getAllSamsungDevices() as LibraryDevice[];
+  const existingPhones = getAllSamsungPhones();
+  const existingTablets = getAllSamsungTablets();
+  const existingWatches = getAllSamsungWatches();
+  const allDevices = getAllSamsungDevices();
 
   console.log(`Phones in library:  ${existingPhones.length}`);
   console.log(`Tablets in library: ${existingTablets.length}`);
@@ -116,8 +115,8 @@ async function main(): Promise<void> {
 
   const report: MissingDevicesReport = {
     generatedAt: new Date().toISOString(),
-    latestDeviceInLibrary: latestDevice
-      ? { name: latestDevice.name, releaseDate: latestDevice.releaseDate! }
+    latestDeviceInLibrary: latestDevice?.releaseDate
+      ? { name: latestDevice.name, releaseDate: latestDevice.releaseDate }
       : null,
     totalDevicesInLibrary: allDevices.length,
     totalMissingDevices: missing.length,

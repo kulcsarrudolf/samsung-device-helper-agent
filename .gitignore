@@ -20,6 +20,9 @@ missing-samsung-models.json
 # Windows
 Thumbs.db
 
+# Yarn
+.yarn/
+
 # Misc
 secrets.js
 *.log

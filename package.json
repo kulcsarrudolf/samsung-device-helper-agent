@@ -11,6 +11,7 @@
   "license": "MIT",
   "scripts": {
     "sync": "tsx src/sync/index.ts",
+    "init:env": "tsx scripts/init-env.ts",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",

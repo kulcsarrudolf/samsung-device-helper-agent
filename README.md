@@ -1,11 +1,26 @@
 # samsung-device-helper-agent
 
-A data validation tool that scrapes Samsung device data from GSMArena and compares it against the [`samsung-device-helper`](https://www.npmjs.com/package/samsung-device-helper) library to identify missing or new devices.
+An agentic tool that automatically detects new Samsung devices on GSM Arena and opens a Pull Request to update the [`samsung-device-helper`](https://www.npmjs.com/package/samsung-device-helper) library.
 
-## What it does
+## How it works
 
-1. **Scrape** — Fetches Samsung phone listings from GSMArena (device name, release date, model numbers)
-2. **Compare** — Matches scraped devices against the `samsung-device-helper` library and reports which ones are missing
+```
+yarn sync
+    │
+    ├─ 1. Read current year's device file from GitHub
+    │
+    ├─ 2. Start Playwright MCP (headless Chromium)
+    │
+    ├─ 3. Claude agent checks GSM Arena
+    │       ├─ Early exit: newest device already in file → done
+    │       └─ New devices found → scrape name, date, type, models
+    │
+    ├─ 4. Sort new devices by release date
+    │
+    └─ 5. Commit updated file + open GitHub PR
+```
+
+Claude controls the browser via the [Playwright MCP](https://github.com/microsoft/playwright-mcp) server, communicating over JSON-RPC/stdio. The GitHub API (via Octokit) handles reading the existing file, creating a branch, committing the update, and opening the PR.
 
 ## Requirements
 
@@ -18,36 +33,20 @@ A data validation tool that scrapes Samsung device data from GSMArena and compar
 yarn install
 ```
 
+## Environment variables
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `GITHUB_TOKEN` | Yes | — | GitHub PAT with `repo` read/write access |
+| `ANTHROPIC_API_KEY` | Yes | — | Claude API key from [console.anthropic.com](https://console.anthropic.com) |
+| `REPO_OWNER` | No | `kulcsarrudolf` | GitHub username of the target repo |
+| `REPO_NAME` | No | `samsung-device-helper` | Target repository name |
+
 ## Usage
 
-### 1. Scrape devices from GSMArena
-
 ```bash
-yarn scrape
+GITHUB_TOKEN=... ANTHROPIC_API_KEY=... yarn sync
 ```
-
-Output is saved to `.output/` as JSON files.
-
-**Optional environment variables:**
-
-| Variable | Default | Description |
-|---|---|---|
-| `SCRAPER_PAGES` | `1` | Number of GSMArena listing pages to scrape |
-| `SCRAPER_MAX_MODELS` | `8` | Max model numbers to extract per device |
-
-Example:
-
-```bash
-SCRAPER_PAGES=3 yarn scrape
-```
-
-### 2. Compare against the library
-
-```bash
-yarn compare
-```
-
-Reads the scraped data from `.output/` and generates a report of devices missing from `samsung-device-helper`.
 
 ## Other scripts
 
@@ -58,4 +57,10 @@ yarn lint           # Run ESLint
 yarn lint:fix       # Run ESLint with auto-fix
 yarn format         # Format with Prettier
 yarn check          # Run typecheck + lint + format check
+```
+
+## Docker
+
+```bash
+GITHUB_TOKEN=... ANTHROPIC_API_KEY=... docker compose up sync
 ```

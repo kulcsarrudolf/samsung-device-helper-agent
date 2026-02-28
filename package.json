@@ -22,8 +22,7 @@
   },
   "dependencies": {
     "cheerio": "^1.0.0-rc.12",
-    "puppeteer": "^22.13.1",
-    "samsung-device-helper": "^0.0.13"
+    "puppeteer": "^22.13.1"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

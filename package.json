@@ -1,14 +1,28 @@
 {
   "name": "samsung-device-scraper",
   "version": "1.0.0",
-  "main": "index.js",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "yarn@4.6.0",
   "repository": "git@github.com:kulcsarrudolf/samsung-device-scraper.git",
   "author": "kulcsarrudolf <kulcsarrudolf@gmail.com>",
   "license": "MIT",
+  "scripts": {
+    "scrape": "tsx src/scraper.ts",
+    "compare": "tsx src/compare.ts",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
   "dependencies": {
-    "axios": "^1.7.2",
     "cheerio": "^1.0.0-rc.12",
     "puppeteer": "^22.13.1",
     "samsung-device-helper": "^0.0.13"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
   }
 }

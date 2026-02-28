@@ -120,7 +120,8 @@ const main = async () => {
       const models = await getAllSamsungModelsLinkFromOnePage(i);
 
       const currentPagePhones = [];
-      const totalModels = models.length;
+      // const totalModels = models.length;
+      const totalModels = 8;
       const maxModels = Math.min(10, totalModels);
 
       console.log(
@@ -138,7 +139,7 @@ const main = async () => {
     }
 
     writeObjectToFile(
-      phones,
+      phones.reverse(),
       `samsung-phones${Math.floor(Date.now() / 1000)}.json`
     );
   } catch (error) {

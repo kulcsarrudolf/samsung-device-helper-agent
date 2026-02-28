@@ -1,96 +1,92 @@
 [
   {
-    "name": "Galaxy S25 FE",
-    "releaseDate": "09-04-2025",
+    "name": "Galaxy S26 Ultra",
+    "releaseDate": "03-06-2026",
     "models": [
-      "SM-S731B",
-      "SM-S731B/DS"
+      "SM-S948B",
+      "SM-S948B/DS",
+      "SM-S948U",
+      "SM-S948U1",
+      "SM-S948W",
+      "SM-S948N",
+      "SM-S9480",
+      "SM-S948E",
+      "SM-S948E/DS"
     ]
   },
   {
-    "name": "Galaxy Tab S11 Ultra",
-    "releaseDate": "09-04-2025",
+    "name": "Galaxy S26+",
+    "releaseDate": "03-06-2026",
     "models": [
-      "SM-X930",
-      "SM-X936B",
-      "SM-X936N",
-      "SM-X930N"
+      "SM-S947B",
+      "SM-S947B/DS",
+      "SM-S947U",
+      "SM-S947U1",
+      "SM-S947W",
+      "SM-S947N",
+      "SM-S9470",
+      "SM-S947E",
+      "SM-S947E/DS"
     ]
   },
   {
-    "name": "Galaxy Tab S11",
-    "releaseDate": "09-04-2025",
+    "name": "Galaxy S26",
+    "releaseDate": "03-06-2026",
     "models": [
-      "SM-X730",
-      "SM-X736",
-      "SM-X736B"
+      "SM-S942B",
+      "SM-S942B/DS",
+      "SM-S942U",
+      "SM-S942U1",
+      "SM-S942W",
+      "SM-S942N",
+      "SM-S9420",
+      "SM-S942E",
+      "SM-S942E/DS"
     ]
   },
   {
-    "name": "Galaxy Tab S10 Lite",
-    "releaseDate": "08-25-2025",
+    "name": "Galaxy F70e",
+    "releaseDate": "02-17-2026",
     "models": [
-      "SM-X400",
-      "SM-X406",
-      "SM-X406B"
+      "SM-E076B",
+      "SM-E076B/DS"
     ]
   },
   {
-    "name": "Galaxy A07 4G",
-    "releaseDate": "08-25-2025",
+    "name": "Galaxy A07",
+    "releaseDate": "01-13-2026",
     "models": [
-      "SM-A075B",
-      "SM-A075B/DS",
-      "SM-A075F",
-      "SM-A075F/DS",
-      "SM-A075M",
-      "SM-A075M/DS"
+      "SM-A076B",
+      "SM-A076B/DS"
     ]
   },
   {
-    "name": "Galaxy A17",
-    "releaseDate": "08-14-2025",
+    "name": "Galaxy Z TriFold",
+    "releaseDate": "12-12-2025",
     "models": [
-      "SM-A176B",
-      "SM-A176B/DS"
+      "SM-F968B",
+      "SM-F968B/DS",
+      "SM-D639B",
+      "SM-D639B/DS",
+      "SM-D639U",
+      "SM-D639U1",
+      "SM-D639N",
+      "SM-D6390"
     ]
   },
   {
-    "name": "Galaxy F36",
-    "releaseDate": "07-29-2025",
+    "name": "Galaxy M17",
+    "releaseDate": "10-13-2025",
     "models": [
-      "SM-E366B",
-      "SM-E366B/DS"
+      ""
     ]
   },
   {
-    "name": "Galaxy Z Fold7",
-    "releaseDate": "07-25-2025",
+    "name": "Galaxy F07",
+    "releaseDate": "10-04-2025",
     "models": [
-      "SM-F966B",
-      "SM-F966B/DS",
-      "SM-F966U",
-      "SM-F966U1"
-    ]
-  },
-  {
-    "name": "Galaxy Z Flip7",
-    "releaseDate": "07-25-2025",
-    "models": [
-      "SM-F766B",
-      "SM-F766B/DS",
-      "SM-F766U",
-      "SM-F766U1"
-    ]
-  },
-  {
-    "name": "Galaxy Z Flip7 FE",
-    "releaseDate": "07-25-2025",
-    "models": [
-      "SM-F761B",
-      "SM-F761B/DS",
-      "SM-F761U1",
-      "SM-F761U"
+      "SM-E075F/DS",
+      "SM-E075F"
     ]
   }
 ]

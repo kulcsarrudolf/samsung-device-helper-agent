@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { Octokit } from '@octokit/rest';
 import { PlaywrightMCPClient } from '../services/mcp.js';
 import { fetchCurrentFile, createPR } from '../services/github.js';

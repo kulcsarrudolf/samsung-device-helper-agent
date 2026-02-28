@@ -31,6 +31,7 @@ Claude controls the browser via the [Playwright MCP](https://github.com/microsof
 
 ```bash
 yarn install
+cp .env.example .env   # then fill in your tokens
 ```
 
 ## Environment variables
@@ -43,6 +44,12 @@ yarn install
 | `REPO_NAME` | No | `samsung-device-helper` | Target repository name |
 
 ## Usage
+
+```bash
+yarn sync
+```
+
+Tokens are loaded automatically from `.env`. To override inline:
 
 ```bash
 GITHUB_TOKEN=... ANTHROPIC_API_KEY=... yarn sync
@@ -62,5 +69,5 @@ yarn check          # Run typecheck + lint + format check
 ## Docker
 
 ```bash
-GITHUB_TOKEN=... ANTHROPIC_API_KEY=... docker compose up sync
+docker compose up sync   # reads tokens from .env automatically
 ```

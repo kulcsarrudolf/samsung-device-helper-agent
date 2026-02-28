@@ -26,6 +26,9 @@ Thumbs.db
 # Yarn
 .yarn/
 
+# Environment
+.env
+
 # Misc
 secrets.js
 *.log

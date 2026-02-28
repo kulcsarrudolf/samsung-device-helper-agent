@@ -1,8 +1,7 @@
 services:
   sync:
     build: .
+    env_file: .env
     environment:
-      - GITHUB_TOKEN=${GITHUB_TOKEN}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - REPO_OWNER=${REPO_OWNER:-kulcsarrudolf}
       - REPO_NAME=${REPO_NAME:-samsung-device-helper}

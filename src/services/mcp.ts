@@ -52,6 +52,11 @@ export class PlaywrightMCPClient {
     });
   }
 
+  private notify(method: string, params: Record<string, unknown>): void {
+    const msg = JSON.stringify({ jsonrpc: '2.0', method, params });
+    this.process.stdin!.write(msg + '\n');
+  }
+
   private send(method: string, params: Record<string, unknown>): Promise<MCPResponse> {
     const id = this.requestId++;
     return new Promise((resolve, reject) => {
@@ -74,7 +79,7 @@ export class PlaywrightMCPClient {
       capabilities: {},
       clientInfo: { name: 'samsung-sync-agent', version: '1.0.0' },
     });
-    await this.send('notifications/initialized', {});
+    this.notify('notifications/initialized', {});
   }
 
   async listTools(): Promise<MCPTool[]> {

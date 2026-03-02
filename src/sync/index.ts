@@ -19,8 +19,11 @@ async function main(): Promise<void> {
   console.log('Fetching current device file from GitHub...');
   const existing = await fetchCurrentFile(octokit);
 
+  const existingNames = existing ? parseExistingNames(existing.content) : new Set<string>();
+
   if (existing) {
-    console.log(`   Found existing file (sha: ${existing.sha.slice(0, 7)})`);
+    console.log(`   Found existing file (sha: ${existing.sha.slice(0, 7)}) — ${existingNames.size} known device(s):`);
+    Array.from(existingNames).forEach((name) => console.log(`     - ${name}`));
   } else {
     console.log('   No existing file — will create from scratch if new devices are found.');
   }
@@ -41,8 +44,7 @@ async function main(): Promise<void> {
 
   // Hard deduplication — filter out anything already in the file,
   // regardless of what the agent reported.
-  if (existing) {
-    const existingNames = parseExistingNames(existing.content);
+  if (existingNames.size > 0) {
     const before = newDevices.length;
     newDevices = newDevices.filter((d) => !existingNames.has(d.name.replace(/^Samsung\s+/i, '').toLowerCase().trim()));
     const skipped = before - newDevices.length;

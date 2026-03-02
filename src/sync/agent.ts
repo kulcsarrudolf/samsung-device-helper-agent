@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { PlaywrightMCPClient } from '../services/mcp.js';
 import type { NewDevice } from '../types.js';
-import { ANTHROPIC_API_KEY, CURRENT_YEAR, GSM_ARENA_SAMSUNG_URL } from '../config.js';
+import { ANTHROPIC_API_KEY, CLAUDE_MODEL, CURRENT_YEAR, GSM_ARENA_SAMSUNG_URL } from '../config.js';
 
 const MAX_ITERATIONS = 40;
 const MAX_TOOL_RESULT_CHARS = 8000;
@@ -156,7 +156,7 @@ export async function runAgent(
     console.log(`[Iteration ${iterations}/${MAX_ITERATIONS}]`);
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: CLAUDE_MODEL,
       max_tokens: 4096,
       system: systemPrompt,
       tools,

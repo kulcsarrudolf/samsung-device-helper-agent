@@ -20,7 +20,8 @@ export function appendToFile(content: string, devices: NewDevice[]): string {
   if (idx === -1) throw new Error('Could not find closing `];` in file — check file format');
   const before = content.slice(0, idx).trimEnd();
   const after = content.slice(idx);
-  return `${before},\n${entries}\n${after}`;
+  const separator = before.endsWith(',') ? '' : ',';
+  return `${before}${separator}\n${entries}\n${after}`;
 }
 
 export function buildNewFile(devices: NewDevice[]): string {

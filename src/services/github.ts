@@ -45,8 +45,17 @@ export async function createPR(
   const refData = await octokit.git.getRef({ owner: REPO_OWNER, repo: REPO_NAME, ref: `heads/${defaultBranch}` });
   const latestCommitSha = refData.data.object.sha;
 
-  await octokit.git.createRef({ owner: REPO_OWNER, repo: REPO_NAME, ref: `refs/heads/${branch}`, sha: latestCommitSha });
-  console.log(`   Branch created: ${branch}`);
+  try {
+    await octokit.git.createRef({ owner: REPO_OWNER, repo: REPO_NAME, ref: `refs/heads/${branch}`, sha: latestCommitSha });
+    console.log(`   Branch created: ${branch}`);
+  } catch (err: unknown) {
+    if ((err as { status?: number }).status === 422) {
+      await octokit.git.updateRef({ owner: REPO_OWNER, repo: REPO_NAME, ref: `heads/${branch}`, sha: latestCommitSha, force: true });
+      console.log(`   Branch already existed, reset to latest: ${branch}`);
+    } else {
+      throw err;
+    }
+  }
 
   await octokit.repos.createOrUpdateFileContents({
     owner: REPO_OWNER,

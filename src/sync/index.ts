@@ -19,6 +19,7 @@ async function main(): Promise<void> {
   console.log('Fetching current device file from GitHub...');
   const existing = await fetchCurrentFile(octokit);
 
+  // existingNames = current year only (used for hard dedup at the end)
   const existingNames = existing ? parseExistingNames(existing.content) : new Set<string>();
   let stopAtName: string | null = existing ? parseLastExistingName(existing.content) : null;
 
@@ -27,13 +28,26 @@ async function main(): Promise<void> {
     Array.from(existingNames).forEach((name) => console.log(`     - ${name}`));
   } else {
     console.log(`   No ${CURRENT_YEAR} file found — will create from scratch.`);
+  }
+
+  // knownNames = current year + previous year (used by the agent for skip/early-exit).
+  // We include previous year when: current year file is missing OR has fewer than 10 devices
+  // (in both cases the GSM Arena top-10 listing will contain previous-year entries).
+  const knownNames = new Set(existingNames);
+  if (!existing || existingNames.size < 10) {
     console.log(`\nFetching previous year file (${PREVIOUS_YEAR_FILE_PATH})...`);
     const previousYear = await fetchPreviousYearFile(octokit);
     if (previousYear) {
-      stopAtName = parseLastExistingName(previousYear.content);
-      console.log(`   Found previous year file — stop marker: "${stopAtName}"`);
+      const prevNames = parseExistingNames(previousYear.content);
+      prevNames.forEach((n) => knownNames.add(n));
+      if (!existing) {
+        stopAtName = parseLastExistingName(previousYear.content);
+        console.log(`   Found previous year file (${prevNames.size} device(s)) — stop marker: "${stopAtName}"`);
+      } else {
+        console.log(`   Found previous year file — added ${prevNames.size} device(s) to known set for early-exit check.`);
+      }
     } else {
-      console.log(`   No previous year file found either — will scrape all ${CURRENT_YEAR} devices.`);
+      console.log(`   No previous year file found.`);
     }
   }
 
@@ -45,7 +59,7 @@ async function main(): Promise<void> {
   let newDevices;
 
   try {
-    newDevices = await runAgent(mcp, existing?.content ?? null, stopAtName);
+    newDevices = await runAgent(mcp, knownNames, stopAtName);
   } finally {
     mcp.close();
     console.log('\nPlaywright MCP server stopped');

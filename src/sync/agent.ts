@@ -1,7 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { PlaywrightMCPClient } from '../services/mcp.js';
 import type { NewDevice } from '../types.js';
-import { parseExistingNames } from '../utils/parse.js';
 import { ANTHROPIC_API_KEY, CURRENT_YEAR, GSM_ARENA_SAMSUNG_URL } from '../config.js';
 
 const MAX_ITERATIONS = 40;
@@ -131,16 +130,14 @@ STEP 6 — WHEN DONE: Call report_devices with all new devices found (empty arra
 
 export async function runAgent(
   mcp: PlaywrightMCPClient,
-  existingContent: string | null,
+  knownNames: Set<string>,
   stopAtName: string | null,
 ): Promise<NewDevice[]> {
   const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
 
-  const existingNames = existingContent ? parseExistingNames(existingContent) : new Set<string>();
-
   const mcpTools = await mcp.listTools();
   const tools = buildTools(mcpTools);
-  const systemPrompt = buildSystemPrompt(existingNames, stopAtName);
+  const systemPrompt = buildSystemPrompt(knownNames, stopAtName);
 
   const messages: Anthropic.MessageParam[] = [
     {

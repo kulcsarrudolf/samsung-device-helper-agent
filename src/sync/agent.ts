@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { PlaywrightMCPClient } from '../services/mcp.js';
 import type { NewDevice } from '../types.js';
-import { parseExistingNames, parseLastExistingName } from '../utils/parse.js';
+import { parseExistingNames } from '../utils/parse.js';
 import { ANTHROPIC_API_KEY, CURRENT_YEAR, GSM_ARENA_SAMSUNG_URL } from '../config.js';
 
 const MAX_ITERATIONS = 40;
@@ -78,7 +78,7 @@ function buildTools(mcp: Awaited<ReturnType<PlaywrightMCPClient['listTools']>>):
   return tools;
 }
 
-function buildSystemPrompt(existingNames: Set<string>, lastExistingName: string | null): string {
+function buildSystemPrompt(existingNames: Set<string>, stopAtName: string | null): string {
   const earlyExitInstruction = existingNames.size > 0
     ? `
 ⚡ EARLY EXIT CHECK — Perform this FIRST before visiting any individual device pages:
@@ -105,7 +105,7 @@ STEP 2 — READ the first 10 devices shown on the listing page.
 STEP 3 — FOR EACH DEVICE, decide whether to scrape its spec page:
    - SKIP if the device name (lowercase, without "Samsung ") is already in our file:
      ${JSON.stringify(Array.from(existingNames))}
-   - SKIP if the name matches "${lastExistingName}" — stop processing further devices.
+   - STOP (do not scrape this or any further devices) if the name matches "${stopAtName}".
    - Otherwise, navigate to the device's spec page and extract the fields below.
 
 STEP 4 — ON EACH SPEC PAGE, extract:
@@ -132,15 +132,15 @@ STEP 6 — WHEN DONE: Call report_devices with all new devices found (empty arra
 export async function runAgent(
   mcp: PlaywrightMCPClient,
   existingContent: string | null,
+  stopAtName: string | null,
 ): Promise<NewDevice[]> {
   const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
 
   const existingNames = existingContent ? parseExistingNames(existingContent) : new Set<string>();
-  const lastExistingName = existingContent ? parseLastExistingName(existingContent) : null;
 
   const mcpTools = await mcp.listTools();
   const tools = buildTools(mcpTools);
-  const systemPrompt = buildSystemPrompt(existingNames, lastExistingName);
+  const systemPrompt = buildSystemPrompt(existingNames, stopAtName);
 
   const messages: Anthropic.MessageParam[] = [
     {

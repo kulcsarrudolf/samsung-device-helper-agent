@@ -1,6 +1,6 @@
 import { Octokit } from '@octokit/rest';
 import type { NewDevice } from '../types.js';
-import { TARGET_FILE_PATH, REPO_OWNER, REPO_NAME, CURRENT_YEAR, GSM_ARENA_SAMSUNG_URL } from '../config.js';
+import { TARGET_FILE_PATH, PREVIOUS_YEAR_FILE_PATH, REPO_OWNER, REPO_NAME, CURRENT_YEAR, GSM_ARENA_SAMSUNG_URL } from '../config.js';
 
 export async function fetchCurrentFile(
   octokit: Octokit,
@@ -10,6 +10,20 @@ export async function fetchCurrentFile(
     const file = res.data as { content: string; sha: string };
     const content = Buffer.from(file.content, 'base64').toString('utf-8');
     return { content, sha: file.sha };
+  } catch (err: unknown) {
+    if ((err as { status?: number }).status === 404) return null;
+    throw err;
+  }
+}
+
+export async function fetchPreviousYearFile(
+  octokit: Octokit,
+): Promise<{ content: string } | null> {
+  try {
+    const res = await octokit.repos.getContent({ owner: REPO_OWNER, repo: REPO_NAME, path: PREVIOUS_YEAR_FILE_PATH });
+    const file = res.data as { content: string };
+    const content = Buffer.from(file.content, 'base64').toString('utf-8');
+    return { content };
   } catch (err: unknown) {
     if ((err as { status?: number }).status === 404) return null;
     throw err;

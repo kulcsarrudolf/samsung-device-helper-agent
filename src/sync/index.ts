@@ -3,7 +3,7 @@ import { Octokit } from '@octokit/rest';
 import { PlaywrightMCPClient } from '../services/mcp.js';
 import { fetchCurrentFile, createPR } from '../services/github.js';
 import { appendToFile, buildNewFile } from '../utils/device.js';
-import { sortByReleaseDate } from '../utils/parse.js';
+import { sortByReleaseDate, parseExistingNames } from '../utils/parse.js';
 import { GITHUB_TOKEN, ANTHROPIC_API_KEY, REPO_OWNER, REPO_NAME, TARGET_FILE_PATH, CURRENT_YEAR } from '../config.js';
 import { runAgent } from './agent.js';
 
@@ -37,6 +37,16 @@ async function main(): Promise<void> {
   } finally {
     mcp.close();
     console.log('\nPlaywright MCP server stopped');
+  }
+
+  // Hard deduplication — filter out anything already in the file,
+  // regardless of what the agent reported.
+  if (existing) {
+    const existingNames = parseExistingNames(existing.content);
+    const before = newDevices.length;
+    newDevices = newDevices.filter((d) => !existingNames.has(d.name.replace(/^Samsung\s+/i, '').toLowerCase().trim()));
+    const skipped = before - newDevices.length;
+    if (skipped > 0) console.log(`   Skipped ${skipped} device(s) already in file.`);
   }
 
   console.log(`\nResult: ${newDevices.length} new device(s) to add`);

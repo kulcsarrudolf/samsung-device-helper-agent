@@ -63,8 +63,8 @@ function buildTools(mcp: Awaited<ReturnType<PlaywrightMCPClient['listTools']>>):
   tools.push({
     name: 'already_up_to_date',
     description:
-      'Call this INSTEAD of report_devices when the first (most recent) device on GSM Arena ' +
-      'matches the last device in our file. No PR will be created.',
+      'Call this INSTEAD of report_devices when all of the first 10 devices on GSM Arena ' +
+      'are already present in our file. No PR will be created.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -79,14 +79,14 @@ function buildTools(mcp: Awaited<ReturnType<PlaywrightMCPClient['listTools']>>):
 }
 
 function buildSystemPrompt(existingNames: Set<string>, lastExistingName: string | null): string {
-  const earlyExitInstruction = lastExistingName
+  const earlyExitInstruction = existingNames.size > 0
     ? `
 ⚡ EARLY EXIT CHECK — Perform this FIRST before visiting any individual device pages:
    1. Navigate to the GSM Arena Samsung listing page (URL provided below).
-   2. Read the VERY FIRST device listed (position #1 = the most recently released device).
-   3. Strip "Samsung " from its name and compare case-insensitively to: "${lastExistingName}"
-   4. If they match → call already_up_to_date immediately and stop.
-   5. If they differ → continue with the full scraping steps below.
+   2. Read the first 10 devices listed (newest-first).
+   3. Strip "Samsung " from each name and check case-insensitively against the existing names list below.
+   4. If ALL of the first 10 devices are already in our list → call already_up_to_date immediately and stop.
+   5. If ANY device is NOT in our list → continue with the full scraping steps below.
 `
     : '';
 

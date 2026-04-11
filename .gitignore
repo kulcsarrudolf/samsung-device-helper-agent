@@ -22,6 +22,7 @@ Thumbs.db
 
 # Claude
 .claude/
+.playwright-mcp/
 
 # Yarn
 .yarn/

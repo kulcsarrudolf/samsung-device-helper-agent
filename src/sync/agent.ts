@@ -170,8 +170,10 @@ export async function runAgent(
     }
 
     if (response.stop_reason === 'end_turn') {
-      console.log('\nAgent ended turn without calling report_devices');
-      break;
+      throw new Error(
+        'Agent ended its turn without calling report_devices or already_up_to_date. ' +
+        'This usually means the browser failed to load. Check that Playwright is installed: npx playwright install chromium',
+      );
     }
 
     if (response.stop_reason === 'tool_use') {

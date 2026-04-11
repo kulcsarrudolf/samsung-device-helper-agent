@@ -10,6 +10,7 @@
   "author": "kulcsarrudolf <kulcsarrudolf@gmail.com>",
   "license": "MIT",
   "scripts": {
+    "postinstall": "npx playwright install chromium",
     "sync": "tsx src/sync/index.ts",
     "init:env": "tsx scripts/init-env.ts",
     "build": "tsc",

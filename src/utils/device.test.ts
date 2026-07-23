@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import * as prettier from 'prettier';
 import { appendToFile, buildNewFile, formatDevice } from './device.js';
 import type { NewDevice } from '../types.js';
 
@@ -16,16 +17,23 @@ const PHONE: NewDevice = {
   models: [],
 };
 
+// Mirrors the target repo's .prettierrc so the guard runs offline (no clone needed).
+const PRETTIER_OPTIONS: prettier.Options = {
+  parser: 'typescript',
+  semi: true,
+  singleQuote: true,
+  trailingComma: 'all',
+  printWidth: 100,
+  tabWidth: 2,
+};
+
 describe('formatDevice', () => {
-  it('renders every field with models one per line', () => {
+  it('renders every field single-quoted with models inline', () => {
     expect(formatDevice(WATCH)).toBe(`  {
-    name: "Galaxy Watch 9",
-    releaseDate: "08-07-2026",
-    type: "watch",
-    models: [
-      "SM-R900",
-      "SM-R905"
-    ],
+    name: 'Galaxy Watch 9',
+    releaseDate: '08-07-2026',
+    type: 'watch',
+    models: ['SM-R900', 'SM-R905'],
   }`);
   });
 
@@ -38,7 +46,7 @@ describe('appendToFile', () => {
   it('inserts new entries before the closing bracket', () => {
     const content = `export const devices = [
   {
-    name: "Galaxy S25",
+    name: 'Galaxy S25',
   },
 ];
 `;
@@ -50,10 +58,10 @@ describe('appendToFile', () => {
   });
 
   it('adds a separating comma only when the last entry lacks one', () => {
-    const withComma = appendToFile('const d = [\n  { name: "X" },\n];', [PHONE]);
-    const withoutComma = appendToFile('const d = [\n  { name: "X" }\n];', [PHONE]);
+    const withComma = appendToFile("const d = [\n  { name: 'X' },\n];", [PHONE]);
+    const withoutComma = appendToFile("const d = [\n  { name: 'X' }\n];", [PHONE]);
     expect(withComma).not.toContain(',,');
-    expect(withoutComma).toContain('{ name: "X" },');
+    expect(withoutComma).toContain("{ name: 'X' },");
   });
 
   it('throws when the closing bracket is missing', () => {
@@ -69,5 +77,36 @@ describe('buildNewFile', () => {
     expect(result).toContain('Galaxy S26');
     expect(result).toContain('Galaxy Watch 9');
     expect(result.endsWith('];\n')).toBe(true);
+  });
+});
+
+// Regression guard: the file the agent commits must be Prettier-clean under the target's config,
+// otherwise the target repo's `format:check` CI fails (the bug this whole flow fixes).
+describe('generated output is Prettier-clean', () => {
+  it('buildNewFile output formats without change (idempotent, single-quoted)', async () => {
+    const raw = buildNewFile([PHONE, WATCH]);
+    const once = await prettier.format(raw, PRETTIER_OPTIONS);
+    const twice = await prettier.format(once, PRETTIER_OPTIONS);
+    expect(twice).toBe(once);
+    expect(once).not.toContain('"');
+  });
+
+  it('appendToFile output formats without change (idempotent, single-quoted)', async () => {
+    const existing = `import { Device } from '../types';
+
+export const samsungDevices2026: Device[] = [
+  {
+    name: 'Galaxy S25',
+    releaseDate: '01-01-2025',
+    type: 'phone',
+    models: [],
+  },
+];
+`;
+    const raw = appendToFile(existing, [PHONE, WATCH]);
+    const once = await prettier.format(raw, PRETTIER_OPTIONS);
+    const twice = await prettier.format(once, PRETTIER_OPTIONS);
+    expect(twice).toBe(once);
+    expect(once).not.toContain('"');
   });
 });

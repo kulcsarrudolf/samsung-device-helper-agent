@@ -2,6 +2,7 @@ import '../env.js';
 import { Octokit } from '@octokit/rest';
 import { PlaywrightMCPClient } from '../services/mcp.js';
 import { fetchCurrentFile, fetchPreviousYearFile, createPR } from '../services/github.js';
+import { formatForTarget } from '../services/format.js';
 import { appendToFile, buildNewFile } from '../utils/device.js';
 import { sortByReleaseDate, parseExistingNames, parseLastExistingName } from '../utils/parse.js';
 import {
@@ -110,8 +111,11 @@ async function main(): Promise<void> {
 
   const updatedContent = existing ? appendToFile(existing.content, sorted) : buildNewFile(sorted);
 
+  console.log('\nFormatting generated file with the target repo Prettier config...');
+  const formattedContent = await formatForTarget(updatedContent, TARGET_FILE_PATH);
+
   console.log('\nCreating GitHub Pull Request...');
-  const prUrl = await createPR(octokit, updatedContent, existing?.sha ?? null, sorted);
+  const prUrl = await createPR(octokit, formattedContent, existing?.sha ?? null, sorted);
 
   console.log(`\nDone! Pull Request opened: ${prUrl}`);
 }

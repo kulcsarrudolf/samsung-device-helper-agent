@@ -6,7 +6,6 @@ import { appendToFile, buildNewFile } from '../utils/device.js';
 import { sortByReleaseDate, parseExistingNames, parseLastExistingName } from '../utils/parse.js';
 import {
   GITHUB_TOKEN,
-  COMET_API_KEY,
   REPO_OWNER,
   REPO_NAME,
   TARGET_FILE_PATH,
@@ -18,9 +17,6 @@ import { runAgent } from './agent.js';
 async function main(): Promise<void> {
   console.log(`\nSamsung Device Sync Agent — ${CURRENT_YEAR}`);
   console.log(`Target: ${REPO_OWNER}/${REPO_NAME}/${TARGET_FILE_PATH}\n`);
-
-  if (!GITHUB_TOKEN) throw new Error('GITHUB_TOKEN environment variable is required.');
-  if (!COMET_API_KEY) throw new Error('COMET_API_KEY environment variable is required.');
 
   const octokit = new Octokit({ auth: GITHUB_TOKEN });
 
@@ -35,7 +31,9 @@ async function main(): Promise<void> {
     console.log(
       `   Found existing file (sha: ${existing.sha.slice(0, 7)}) — ${existingNames.size} known device(s):`,
     );
-    Array.from(existingNames).forEach((name) => console.log(`     - ${name}`));
+    Array.from(existingNames).forEach((name) => {
+      console.log(`     - ${name}`);
+    });
   } else {
     console.log(`   No ${CURRENT_YEAR} file found — will create from scratch.`);
   }
@@ -106,7 +104,9 @@ async function main(): Promise<void> {
   const sorted = sortByReleaseDate(newDevices);
 
   console.log('\nNew devices (sorted oldest → newest):');
-  sorted.forEach((d) => console.log(`  + ${d.name} (${d.type}) — ${d.releaseDate}`));
+  sorted.forEach((d) => {
+    console.log(`  + ${d.name} (${d.type}) — ${d.releaseDate}`);
+  });
 
   const updatedContent = existing ? appendToFile(existing.content, sorted) : buildNewFile(sorted);
 
@@ -116,7 +116,7 @@ async function main(): Promise<void> {
   console.log(`\nDone! Pull Request opened: ${prUrl}`);
 }
 
-main().catch((err) => {
+main().catch((err: unknown) => {
   console.error(err);
   process.exit(1);
 });

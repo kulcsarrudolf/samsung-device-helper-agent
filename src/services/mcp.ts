@@ -1,9 +1,11 @@
-import { spawn, ChildProcess } from 'child_process';
+import { spawn, type ChildProcess } from 'child_process';
 import * as readline from 'readline';
+import type { Writable } from 'stream';
 import type { MCPTool, MCPResponse } from '../types.js';
 
 export class PlaywrightMCPClient {
   private process: ChildProcess;
+  private stdin: Writable;
   private rl: readline.Interface;
   private pendingRequests = new Map<
     number,
@@ -25,11 +27,16 @@ export class PlaywrightMCPClient {
       { stdio: ['pipe', 'pipe', 'pipe'] },
     );
 
-    this.rl = readline.createInterface({ input: this.process.stdout! });
+    const { stdin, stdout } = this.process;
+    if (!stdin || !stdout) {
+      throw new Error('Playwright MCP process did not expose stdio pipes');
+    }
+    this.stdin = stdin;
+    this.rl = readline.createInterface({ input: stdout });
 
     this.rl.on('line', (line) => {
       try {
-        const msg: MCPResponse = JSON.parse(line);
+        const msg = JSON.parse(line) as MCPResponse;
         const pending = this.pendingRequests.get(msg.id);
         if (pending) {
           this.pendingRequests.delete(msg.id);
@@ -54,7 +61,7 @@ export class PlaywrightMCPClient {
 
   private notify(method: string, params: Record<string, unknown>): void {
     const msg = JSON.stringify({ jsonrpc: '2.0', method, params });
-    this.process.stdin!.write(msg + '\n');
+    this.stdin.write(msg + '\n');
   }
 
   private send(method: string, params: Record<string, unknown>): Promise<MCPResponse> {
@@ -62,7 +69,7 @@ export class PlaywrightMCPClient {
     return new Promise((resolve, reject) => {
       this.pendingRequests.set(id, { resolve, reject });
       const msg = JSON.stringify({ jsonrpc: '2.0', id, method, params });
-      this.process.stdin!.write(msg + '\n');
+      this.stdin.write(msg + '\n');
 
       setTimeout(() => {
         if (this.pendingRequests.has(id)) {
@@ -84,15 +91,15 @@ export class PlaywrightMCPClient {
 
   async listTools(): Promise<MCPTool[]> {
     const res = await this.send('tools/list', {});
-    return res.result?.tools || [];
+    return res.result?.tools ?? [];
   }
 
   async callTool(name: string, args: Record<string, unknown>): Promise<string> {
     const res = await this.send('tools/call', { name, arguments: args });
-    const content = res.result?.content || [];
+    const content = res.result?.content ?? [];
     return content
       .filter((c) => c.type === 'text')
-      .map((c) => c.text || '')
+      .map((c) => c.text ?? '')
       .join('\n');
   }
 

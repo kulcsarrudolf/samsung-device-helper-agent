@@ -21,7 +21,7 @@ function buildTools(mcp: Awaited<ReturnType<PlaywrightMCPClient['listTools']>>):
     function: {
       name: t.name,
       description: t.description,
-      parameters: t.inputSchema as Record<string, unknown>,
+      parameters: t.inputSchema,
     },
   }));
 
@@ -190,7 +190,7 @@ export async function runAgent(
       throw new Error('LLM response contained no choices');
     }
 
-    if (msg.content && msg.content.trim()) {
+    if (msg.content?.trim()) {
       console.log(`[Agent] ${msg.content.trim()}`);
     }
 
@@ -211,7 +211,7 @@ export async function runAgent(
       const name = call.function.name;
       let args: Record<string, unknown>;
       try {
-        args = JSON.parse(call.function.arguments || '{}');
+        args = JSON.parse(call.function.arguments || '{}') as Record<string, unknown>;
       } catch {
         args = {};
       }
@@ -235,11 +235,11 @@ export async function runAgent(
 
       if (name === 'report_devices') {
         const input = args as { devices?: NewDevice[] };
-        newDevices = input.devices || [];
+        newDevices = input.devices ?? [];
         console.log(`\nAgent reported ${newDevices.length} new device(s):`);
-        newDevices.forEach((d) =>
-          console.log(`   + ${d.name} (${d.type}) ${d.releaseDate} ${d.models.length} model(s)`),
-        );
+        newDevices.forEach((d) => {
+          console.log(`   + ${d.name} (${d.type}) ${d.releaseDate} ${d.models.length} model(s)`);
+        });
 
         messages.push({
           role: 'tool',

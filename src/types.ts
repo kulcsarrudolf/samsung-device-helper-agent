@@ -13,10 +13,3 @@ export interface MCPResponse {
   };
   error?: { code: number; message: string };
 }
-
-export interface NewDevice {
-  name: string;
-  releaseDate: string;
-  type: 'phone' | 'tablet' | 'watch';
-  models: string[];
-}

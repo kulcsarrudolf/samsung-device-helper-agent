@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import * as prettier from 'prettier';
 import { appendToFile, buildNewFile, formatDevice } from './device.js';
-import type { NewDevice } from '../types.js';
+import type { NewDevice } from '../agent/schema.js';
 
 const WATCH: NewDevice = {
   name: 'Galaxy Watch 9',

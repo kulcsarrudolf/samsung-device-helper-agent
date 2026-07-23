@@ -1,5 +1,5 @@
 import { Octokit } from '@octokit/rest';
-import type { NewDevice } from '../types.js';
+import type { NewDevice } from '../agent/schema.js';
 import {
   TARGET_FILE_PATH,
   PREVIOUS_YEAR_FILE_PATH,

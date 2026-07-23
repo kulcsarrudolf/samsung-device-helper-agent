@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseExistingNames, parseLastExistingName, sortByReleaseDate } from './parse.js';
-import type { NewDevice } from '../types.js';
+import type { NewDevice } from '../agent/schema.js';
 
 const FILE_CONTENT = `import { Device } from "../types";
 

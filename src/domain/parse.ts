@@ -1,4 +1,4 @@
-import type { NewDevice } from '../types.js';
+import type { NewDevice } from '../agent/schema.js';
 
 function normalizeName(name: string): string {
   return name

@@ -19,4 +19,4 @@ RUN yarn build
 
 RUN npx playwright install chromium --with-deps
 
-CMD ["node", "dist/sync/index.js"]
+CMD ["node", "dist/cli/sync.js"]

@@ -1,7 +1,14 @@
 import '../env.js';
 import { buildGraph } from '../agent/graph.js';
 import { createCheckpointer, syncThreadId } from '../agent/checkpointer.js';
-import { CURRENT_YEAR, REPO_OWNER, REPO_NAME, TARGET_FILE_PATH, DRY_RUN } from '../config.js';
+import {
+  CURRENT_YEAR,
+  REPO_OWNER,
+  REPO_NAME,
+  TARGET_FILE_PATH,
+  DRY_RUN,
+  LANGSMITH_TRACING,
+} from '../config.js';
 
 async function main(): Promise<void> {
   const dryRun = DRY_RUN || process.argv.includes('--dry-run');
@@ -9,6 +16,7 @@ async function main(): Promise<void> {
   console.log(`\nSamsung Device Sync Agent: ${String(CURRENT_YEAR)}`);
   console.log(`Target: ${REPO_OWNER}/${REPO_NAME}/${TARGET_FILE_PATH}`);
   if (dryRun) console.log('Mode: DRY RUN (no PR will be created)');
+  if (LANGSMITH_TRACING) console.log('LangSmith tracing: enabled');
   console.log('');
 
   const checkpointer = createCheckpointer();

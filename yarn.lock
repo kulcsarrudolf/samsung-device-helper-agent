@@ -1097,13 +1097,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dotenv@npm:^17.3.1":
-  version: 17.3.1
-  resolution: "dotenv@npm:17.3.1"
-  checksum: 10c0/c78e0c2d5a549c751e544cc60e2b95e7cb67e0c551f42e094d161c6b297aa44b630a3c2dcacf5569e529a6c2a6b84e2ab9be8d37b299d425df5a18b81ce4a35f
-  languageName: node
-  linkType: hard
-
 "env-paths@npm:^2.2.0":
   version: 2.2.1
   resolution: "env-paths@npm:2.2.1"
@@ -1650,6 +1643,117 @@ __metadata:
   dependencies:
     json-buffer: "npm:3.0.1"
   checksum: 10c0/aa52f3c5e18e16bb6324876bb8b59dd02acf782a4b789c7b2ae21107fab95fab3890ed448d4f8dba80ce05391eeac4bfabb4f02a20221342982f806fa2cf271e
+  languageName: node
+  linkType: hard
+
+"lefthook-darwin-arm64@npm:2.1.10":
+  version: 2.1.10
+  resolution: "lefthook-darwin-arm64@npm:2.1.10"
+  conditions: os=darwin & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"lefthook-darwin-x64@npm:2.1.10":
+  version: 2.1.10
+  resolution: "lefthook-darwin-x64@npm:2.1.10"
+  conditions: os=darwin & cpu=x64
+  languageName: node
+  linkType: hard
+
+"lefthook-freebsd-arm64@npm:2.1.10":
+  version: 2.1.10
+  resolution: "lefthook-freebsd-arm64@npm:2.1.10"
+  conditions: os=freebsd & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"lefthook-freebsd-x64@npm:2.1.10":
+  version: 2.1.10
+  resolution: "lefthook-freebsd-x64@npm:2.1.10"
+  conditions: os=freebsd & cpu=x64
+  languageName: node
+  linkType: hard
+
+"lefthook-linux-arm64@npm:2.1.10":
+  version: 2.1.10
+  resolution: "lefthook-linux-arm64@npm:2.1.10"
+  conditions: os=linux & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"lefthook-linux-x64@npm:2.1.10":
+  version: 2.1.10
+  resolution: "lefthook-linux-x64@npm:2.1.10"
+  conditions: os=linux & cpu=x64
+  languageName: node
+  linkType: hard
+
+"lefthook-openbsd-arm64@npm:2.1.10":
+  version: 2.1.10
+  resolution: "lefthook-openbsd-arm64@npm:2.1.10"
+  conditions: os=openbsd & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"lefthook-openbsd-x64@npm:2.1.10":
+  version: 2.1.10
+  resolution: "lefthook-openbsd-x64@npm:2.1.10"
+  conditions: os=openbsd & cpu=x64
+  languageName: node
+  linkType: hard
+
+"lefthook-windows-arm64@npm:2.1.10":
+  version: 2.1.10
+  resolution: "lefthook-windows-arm64@npm:2.1.10"
+  conditions: os=win32 & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"lefthook-windows-x64@npm:2.1.10":
+  version: 2.1.10
+  resolution: "lefthook-windows-x64@npm:2.1.10"
+  conditions: os=win32 & cpu=x64
+  languageName: node
+  linkType: hard
+
+"lefthook@npm:^2.1.10":
+  version: 2.1.10
+  resolution: "lefthook@npm:2.1.10"
+  dependencies:
+    lefthook-darwin-arm64: "npm:2.1.10"
+    lefthook-darwin-x64: "npm:2.1.10"
+    lefthook-freebsd-arm64: "npm:2.1.10"
+    lefthook-freebsd-x64: "npm:2.1.10"
+    lefthook-linux-arm64: "npm:2.1.10"
+    lefthook-linux-x64: "npm:2.1.10"
+    lefthook-openbsd-arm64: "npm:2.1.10"
+    lefthook-openbsd-x64: "npm:2.1.10"
+    lefthook-windows-arm64: "npm:2.1.10"
+    lefthook-windows-x64: "npm:2.1.10"
+  dependenciesMeta:
+    lefthook-darwin-arm64:
+      optional: true
+    lefthook-darwin-x64:
+      optional: true
+    lefthook-freebsd-arm64:
+      optional: true
+    lefthook-freebsd-x64:
+      optional: true
+    lefthook-linux-arm64:
+      optional: true
+    lefthook-linux-x64:
+      optional: true
+    lefthook-openbsd-arm64:
+      optional: true
+    lefthook-openbsd-x64:
+      optional: true
+    lefthook-windows-arm64:
+      optional: true
+    lefthook-windows-x64:
+      optional: true
+  bin:
+    lefthook: bin/index.js
+  checksum: 10c0/be812e1517a967977750a41f15a2070cea63e1774137737426f636e1bd379f4dfc73482fa7f07df6b9a1413ee50c6e2d790936d7986bdcafd46255d871c17b76
   languageName: node
   linkType: hard
 
@@ -2255,9 +2359,9 @@ __metadata:
     "@octokit/rest": "npm:^22.0.1"
     "@playwright/mcp": "npm:^0.0.78"
     "@types/node": "npm:^22.20.1"
-    dotenv: "npm:^17.3.1"
     eslint: "npm:^10.7.0"
     eslint-config-prettier: "npm:^10.1.8"
+    lefthook: "npm:^2.1.10"
     openai: "npm:^6.48.0"
     prettier: "npm:^3.9.6"
     tsx: "npm:^4.23.1"

@@ -10,7 +10,7 @@
   "author": "kulcsarrudolf <kulcsarrudolf@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "postinstall": "npx playwright install chromium",
+    "postinstall": "npx playwright install chromium && (lefthook install || true)",
     "sync": "tsx src/sync/index.ts",
     "init:env": "tsx scripts/init-env.ts",
     "build": "tsc -p tsconfig.build.json",
@@ -27,6 +27,7 @@
     "@types/node": "^22.20.1",
     "eslint": "^10.7.0",
     "eslint-config-prettier": "^10.1.8",
+    "lefthook": "^2.1.10",
     "prettier": "^3.9.6",
     "tsx": "^4.23.1",
     "typescript": "^5.9.3",
@@ -36,7 +37,6 @@
   "dependencies": {
     "@octokit/rest": "^22.0.1",
     "@playwright/mcp": "^0.0.78",
-    "dotenv": "^17.3.1",
     "openai": "^6.48.0"
   }
 }

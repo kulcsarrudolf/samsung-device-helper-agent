@@ -70,16 +70,28 @@ Tokens are loaded automatically from `.env`. To override inline:
 GITHUB_TOKEN=... COMET_API_KEY=... yarn sync
 ```
 
+Environment variables are loaded natively via `process.loadEnvFile()` (no dotenv dependency).
+When no `.env` file exists, the process environment is used as-is, which is how Docker supplies them.
+
 ## Other scripts
 
 ```bash
 yarn build          # Compile TypeScript to dist/
 yarn typecheck      # Type-check without emitting
-yarn lint           # Run ESLint
+yarn lint           # Run ESLint (type-aware, whole repo)
 yarn lint:fix       # Run ESLint with auto-fix
 yarn format         # Format with Prettier
-yarn check          # Run typecheck + lint + format check
+yarn test           # Run unit tests (Vitest)
+yarn test:watch     # Run tests in watch mode
+yarn check          # Run typecheck + lint + format check + tests
 ```
+
+## Git hooks
+
+Hooks are managed by [Lefthook](https://github.com/evilmartians/lefthook) and installed automatically by `yarn install`.
+
+- **pre-commit**: ESLint (auto-fix) and Prettier on staged files
+- **pre-push**: full typecheck and test suite
 
 ## Docker
 

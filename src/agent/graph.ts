@@ -10,15 +10,10 @@ import { SyncState, type SyncStateType } from './state.js';
 import { createPlaywrightMcpClient } from './tools.js';
 import { runScrapeAgent } from './scrape-agent.js';
 import { fetchCurrentFile, fetchPreviousYearFile, createPR } from '../services/github.js';
-import { formatForTarget } from '../services/format.js';
+import { regenerateTargetFiles } from '../services/generate.js';
 import { appendToFile, buildNewFile } from '../domain/device.js';
 import { sortByReleaseDate, parseExistingNames, parseLastExistingName } from '../domain/parse.js';
-import {
-  GITHUB_TOKEN,
-  CURRENT_YEAR,
-  TARGET_FILE_PATH,
-  PREVIOUS_YEAR_FILE_PATH,
-} from '../config.js';
+import { GITHUB_TOKEN, CURRENT_YEAR, PREVIOUS_YEAR_FILE_PATH } from '../config.js';
 
 function normalizeName(name: string): string {
   return name
@@ -131,25 +126,32 @@ function buildContent(state: SyncStateType): Partial<SyncStateType> {
   return { content };
 }
 
-/** Format the generated content with the target repo's own Prettier config. */
-async function format(state: SyncStateType): Promise<Partial<SyncStateType>> {
-  console.log('\nFormatting generated file with the target repo Prettier config...');
-  const content = await formatForTarget(state.content, TARGET_FILE_PATH);
-  return { content };
+/**
+ * Regenerate the full set of files the PR must contain: the per-year data file plus the target's
+ * derived `src/generated/*` modules, formatted and validated with the target's own tooling.
+ */
+async function generate(state: SyncStateType): Promise<Partial<SyncStateType>> {
+  const outputFiles = await regenerateTargetFiles(state.content);
+  return { outputFiles };
 }
 
-/** Commit the file and open the PR, unless running in dry-run mode. */
+/** Commit the files and open the PR, unless running in dry-run mode. */
 async function publish(state: SyncStateType): Promise<Partial<SyncStateType>> {
   if (state.dryRun) {
-    console.log('\n[dry-run] Skipping PR creation. Generated file content:\n');
-    console.log(state.content);
-    console.log(`\n[dry-run] Would open a PR adding ${String(state.sorted.length)} device(s).`);
+    console.log('\n[dry-run] Skipping PR creation. Files that would be committed:');
+    for (const file of state.outputFiles) {
+      console.log(`\n----- ${file.path} -----`);
+      console.log(file.content);
+    }
+    console.log(
+      `\n[dry-run] Would open a PR committing ${String(state.outputFiles.length)} file(s) for ${String(state.sorted.length)} device(s).`,
+    );
     return { prUrl: null };
   }
 
   console.log('\nCreating GitHub Pull Request...');
   const octokit = new Octokit({ auth: GITHUB_TOKEN });
-  const prUrl = await createPR(octokit, state.content, state.existingSha, state.sorted);
+  const prUrl = await createPR(octokit, state.outputFiles, state.sorted);
   return { prUrl };
 }
 
@@ -158,7 +160,16 @@ function hasNewDevices(state: SyncStateType): typeof END | 'sort' {
   return state.newDevices.length === 0 ? END : 'sort';
 }
 
-export { fetchExisting, resolveKnownNames, scrape, hardDedup, sort, buildContent, format, publish };
+export {
+  fetchExisting,
+  resolveKnownNames,
+  scrape,
+  hardDedup,
+  sort,
+  buildContent,
+  generate,
+  publish,
+};
 
 // Retry transient failures on the network-bound nodes (GitHub reads, target-repo clone, PR).
 const NETWORK_RETRY: RetryPolicy = { maxAttempts: 3 };
@@ -175,7 +186,7 @@ export function buildGraph(checkpointer?: BaseCheckpointSaver) {
     .addNode('hardDedup', hardDedup)
     .addNode('sort', sort)
     .addNode('buildContent', buildContent)
-    .addNode('format', format, { retryPolicy: NETWORK_RETRY })
+    .addNode('generate', generate, { retryPolicy: NETWORK_RETRY })
     .addNode('publish', publish, { retryPolicy: NETWORK_RETRY })
     .addEdge(START, 'fetchExisting')
     .addEdge('fetchExisting', 'resolveKnownNames')
@@ -183,8 +194,8 @@ export function buildGraph(checkpointer?: BaseCheckpointSaver) {
     .addEdge('scrape', 'hardDedup')
     .addConditionalEdges('hardDedup', hasNewDevices, { sort: 'sort', [END]: END })
     .addEdge('sort', 'buildContent')
-    .addEdge('buildContent', 'format')
-    .addEdge('format', 'publish')
+    .addEdge('buildContent', 'generate')
+    .addEdge('generate', 'publish')
     .addEdge('publish', END)
     .compile(checkpointer ? { checkpointer } : undefined);
 }

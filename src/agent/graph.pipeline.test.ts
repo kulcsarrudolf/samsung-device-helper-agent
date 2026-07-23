@@ -14,8 +14,9 @@ vi.mock('../services/github.js', () => ({
   fetchPreviousYearFile: vi.fn(),
   createPR: vi.fn(),
 }));
-vi.mock('../services/format.js', () => ({
-  formatForTarget: (content: string) => Promise.resolve(content),
+vi.mock('../services/generate.js', () => ({
+  regenerateTargetFiles: (content: string) =>
+    Promise.resolve([{ path: 'src/data/samsung-devices-2026.ts', content }]),
 }));
 
 const { buildGraph } = await import('./graph.js');

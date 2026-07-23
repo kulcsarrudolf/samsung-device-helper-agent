@@ -19,6 +19,7 @@ const baseState = (overrides: Partial<SyncStateType>): SyncStateType => ({
   newDevices: [],
   sorted: [],
   content: '',
+  outputFiles: [],
   prUrl: null,
   dryRun: false,
   ...overrides,
@@ -74,7 +75,7 @@ describe('publish', () => {
   it('skips PR creation and returns no prUrl in dry-run mode', async () => {
     const state = baseState({
       dryRun: true,
-      content: 'export const x = [];',
+      outputFiles: [{ path: 'src/data/samsung-devices-2026.ts', content: 'export const x = [];' }],
       sorted: [device('Galaxy S26', '02-25-2026')],
     });
     await expect(publish(state)).resolves.toEqual({ prUrl: null });

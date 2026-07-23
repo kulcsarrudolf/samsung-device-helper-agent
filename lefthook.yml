@@ -1,0 +1,17 @@
+pre-commit:
+  jobs:
+    - name: lint
+      glob: '*.{ts,js}'
+      run: yarn eslint --fix {staged_files}
+      stage_fixed: true
+    - name: format
+      glob: '*.{ts,js,json,md,yml,yaml}'
+      run: yarn prettier --write {staged_files}
+      stage_fixed: true
+
+pre-push:
+  jobs:
+    - name: typecheck
+      run: yarn typecheck
+    - name: test
+      run: yarn test

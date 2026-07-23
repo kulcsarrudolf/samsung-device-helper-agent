@@ -45,6 +45,19 @@ yarn init:env   # creates .env with placeholder values — replace them with you
 | `REPO_OWNER` | No | `kulcsarrudolf` | GitHub username of the target repo |
 | `REPO_NAME` | No | `samsung-device-helper` | Target repository name |
 
+### Generating the GitHub token
+
+`GITHUB_TOKEN` is a Personal Access Token (PAT) the agent uses to read the device file, create a branch, commit, and open the PR. To create a classic PAT:
+
+1. Open [github.com/settings/tokens](https://github.com/settings/tokens) (GitHub, then Settings, then Developer settings, then Personal access tokens, then Tokens (classic)).
+2. Click **Generate new token**, then **Generate new token (classic)**.
+3. Set a **Note** (e.g. `samsung-device-helper-agent`) and an **Expiration**.
+4. Under **Select scopes**, check **`repo`** (full control of repositories; covers contents and pull requests).
+5. Click **Generate token**, then copy it immediately (`ghp_...`). GitHub shows it only once.
+6. Add it to your `.env` as `GITHUB_TOKEN=ghp_...`.
+
+> Prefer a fine-grained token? Create one scoped to the target repository with **Contents: Read and write** and **Pull requests: Read and write** permissions instead.
+
 ## Usage
 
 ```bash

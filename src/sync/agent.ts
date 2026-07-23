@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import type { PlaywrightMCPClient } from '../services/mcp.js';
-import type { NewDevice } from '../types.js';
+import type { NewDevice } from '../agent/schema.js';
 import {
   COMET_API_KEY,
   COMET_BASE_URL,

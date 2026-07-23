@@ -3,8 +3,8 @@ import { Octokit } from '@octokit/rest';
 import { PlaywrightMCPClient } from '../services/mcp.js';
 import { fetchCurrentFile, fetchPreviousYearFile, createPR } from '../services/github.js';
 import { formatForTarget } from '../services/format.js';
-import { appendToFile, buildNewFile } from '../utils/device.js';
-import { sortByReleaseDate, parseExistingNames, parseLastExistingName } from '../utils/parse.js';
+import { appendToFile, buildNewFile } from '../domain/device.js';
+import { sortByReleaseDate, parseExistingNames, parseLastExistingName } from '../domain/parse.js';
 import {
   GITHUB_TOKEN,
   REPO_OWNER,

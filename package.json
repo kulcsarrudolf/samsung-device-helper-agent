@@ -34,9 +34,13 @@
     "vitest": "^4.1.10"
   },
   "dependencies": {
+    "@langchain/core": "^1.2.3",
+    "@langchain/langgraph": "^1.4.8",
+    "@langchain/openai": "^1.5.5",
     "@octokit/rest": "^22.0.1",
     "@playwright/mcp": "^0.0.78",
     "openai": "^6.48.0",
-    "prettier": "^3.9.6"
+    "prettier": "^3.9.6",
+    "zod": "^4.4.3"
   }
 }

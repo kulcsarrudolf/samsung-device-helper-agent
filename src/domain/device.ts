@@ -1,4 +1,4 @@
-import type { NewDevice } from '../types.js';
+import type { NewDevice } from '../agent/schema.js';
 import { EXPORT_CONST_NAME } from '../config.js';
 
 // These templates intentionally emit compact, valid, single-quoted TypeScript.

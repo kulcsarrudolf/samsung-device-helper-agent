@@ -1,6 +1,7 @@
 import '../env.js';
 import { Octokit } from '@octokit/rest';
-import { PlaywrightMCPClient } from '../services/mcp.js';
+import { createPlaywrightMcpClient } from '../agent/tools.js';
+import { runScrapeAgent } from '../agent/scrape-agent.js';
 import { fetchCurrentFile, fetchPreviousYearFile, createPR } from '../services/github.js';
 import { formatForTarget } from '../services/format.js';
 import { appendToFile, buildNewFile } from '../domain/device.js';
@@ -13,7 +14,6 @@ import {
   PREVIOUS_YEAR_FILE_PATH,
   CURRENT_YEAR,
 } from '../config.js';
-import { runAgent } from './agent.js';
 
 async function main(): Promise<void> {
   console.log(`\nSamsung Device Sync Agent — ${CURRENT_YEAR}`);
@@ -65,16 +65,16 @@ async function main(): Promise<void> {
   }
 
   console.log('\nStarting Playwright MCP server (headless Chromium)...');
-  const mcp = new PlaywrightMCPClient();
-  await mcp.initialize();
-  console.log('   MCP server ready');
+  const mcpClient = createPlaywrightMcpClient();
 
   let newDevices;
 
   try {
-    newDevices = await runAgent(mcp, knownNames, stopAtName);
+    const tools = await mcpClient.getTools();
+    console.log('   MCP server ready');
+    newDevices = await runScrapeAgent(tools, knownNames, stopAtName);
   } finally {
-    mcp.close();
+    await mcpClient.close();
     console.log('\nPlaywright MCP server stopped');
   }
 

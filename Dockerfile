@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-RUN corepack enable && corepack prepare yarn@4.6.0 --activate
+RUN corepack enable && corepack prepare yarn@4.17.1 --activate
 
 COPY package.json yarn.lock .yarnrc.yml ./
 RUN yarn install --immutable

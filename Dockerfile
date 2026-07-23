@@ -2,6 +2,7 @@ FROM node:24-slim
 
 RUN apt-get update && apt-get install -y \
   chromium \
+  git \
   --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 

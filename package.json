@@ -13,7 +13,7 @@
     "postinstall": "npx playwright install chromium",
     "sync": "tsx src/sync/index.ts",
     "init:env": "tsx scripts/init-env.ts",
-    "build": "tsc",
+    "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",

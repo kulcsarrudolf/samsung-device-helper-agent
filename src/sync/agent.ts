@@ -1,27 +1,35 @@
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import type { PlaywrightMCPClient } from '../services/mcp.js';
 import type { NewDevice } from '../types.js';
-import { ANTHROPIC_API_KEY, CLAUDE_MODEL, CURRENT_YEAR, GSM_ARENA_SAMSUNG_URL } from '../config.js';
+import { COMET_API_KEY, COMET_BASE_URL, LLM_MODEL, CURRENT_YEAR, GSM_ARENA_SAMSUNG_URL } from '../config.js';
+
+type ChatTool = OpenAI.Chat.Completions.ChatCompletionTool;
+type ChatMessage = OpenAI.Chat.Completions.ChatCompletionMessageParam;
 
 const MAX_ITERATIONS = 40;
 const MAX_TOOL_RESULT_CHARS = 8000;
 
-function buildTools(mcp: Awaited<ReturnType<PlaywrightMCPClient['listTools']>>): Anthropic.Tool[] {
-  const tools: Anthropic.Tool[] = mcp.map((t) => ({
-    name: t.name,
-    description: t.description,
-    input_schema: t.inputSchema as Anthropic.Tool['input_schema'],
+function buildTools(mcp: Awaited<ReturnType<PlaywrightMCPClient['listTools']>>): ChatTool[] {
+  const tools: ChatTool[] = mcp.map((t) => ({
+    type: 'function',
+    function: {
+      name: t.name,
+      description: t.description,
+      parameters: t.inputSchema as Record<string, unknown>,
+    },
   }));
 
   tools.push({
-    name: 'report_devices',
-    description:
-      'Call this when you have finished scraping all relevant devices. ' +
-      'Report all new Samsung devices found on GSM Arena that are NOT already in the existing list. ' +
-      'If no new devices were found, call this with an empty devices array.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
+    type: 'function',
+    function: {
+      name: 'report_devices',
+      description:
+        'Call this when you have finished scraping all relevant devices. ' +
+        'Report all new Samsung devices found on GSM Arena that are NOT already in the existing list. ' +
+        'If no new devices were found, call this with an empty devices array.',
+      parameters: {
+        type: 'object' as const,
+        properties: {
         devices: {
           type: 'array',
           description: 'List of new devices to add. Empty array if nothing new.',
@@ -55,22 +63,26 @@ function buildTools(mcp: Awaited<ReturnType<PlaywrightMCPClient['listTools']>>):
           },
         },
       },
-      required: ['devices'],
+        required: ['devices'],
+      },
     },
   });
 
   tools.push({
-    name: 'already_up_to_date',
-    description:
-      'Call this INSTEAD of report_devices when all of the first 10 devices on GSM Arena ' +
-      'are already present in our file. No PR will be created.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        first_gsm_name: { type: 'string', description: 'Newest device name on GSM Arena' },
-        last_file_name: { type: 'string', description: 'Last device name in our repository file' },
+    type: 'function',
+    function: {
+      name: 'already_up_to_date',
+      description:
+        'Call this INSTEAD of report_devices when all of the first 10 devices on GSM Arena ' +
+        'are already present in our file. No PR will be created.',
+      parameters: {
+        type: 'object' as const,
+        properties: {
+          first_gsm_name: { type: 'string', description: 'Newest device name on GSM Arena' },
+          last_file_name: { type: 'string', description: 'Last device name in our repository file' },
+        },
+        required: ['first_gsm_name', 'last_file_name'],
       },
-      required: ['first_gsm_name', 'last_file_name'],
     },
   });
 
@@ -133,13 +145,14 @@ export async function runAgent(
   knownNames: Set<string>,
   stopAtName: string | null,
 ): Promise<NewDevice[]> {
-  const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+  const client = new OpenAI({ apiKey: COMET_API_KEY, baseURL: COMET_BASE_URL });
 
   const mcpTools = await mcp.listTools();
   const tools = buildTools(mcpTools);
   const systemPrompt = buildSystemPrompt(knownNames, stopAtName);
 
-  const messages: Anthropic.MessageParam[] = [
+  const messages: ChatMessage[] = [
+    { role: 'system', content: systemPrompt },
     {
       role: 'user',
       content: `Please sync Samsung devices from GSM Arena for ${CURRENT_YEAR}. Start with the early-exit check, then proceed with full scraping only if needed.`,
@@ -155,93 +168,90 @@ export async function runAgent(
     iterations++;
     console.log(`[Iteration ${iterations}/${MAX_ITERATIONS}]`);
 
-    const response = await anthropic.messages.create({
-      model: CLAUDE_MODEL,
+    const response = await client.chat.completions.create({
+      model: LLM_MODEL,
       max_tokens: 4096,
-      system: systemPrompt,
       tools,
       messages,
     });
 
-    for (const block of response.content) {
-      if (block.type === 'text' && block.text.trim()) {
-        console.log(`[Agent] ${block.text.trim()}`);
-      }
+    const msg = response.choices[0].message;
+
+    if (msg.content && msg.content.trim()) {
+      console.log(`[Agent] ${msg.content.trim()}`);
     }
 
-    if (response.stop_reason === 'end_turn') {
+    const toolCalls = msg.tool_calls ?? [];
+
+    if (toolCalls.length === 0) {
       throw new Error(
         'Agent ended its turn without calling report_devices or already_up_to_date. ' +
         'This usually means the browser failed to load. Check that Playwright is installed: npx playwright install chromium',
       );
     }
 
-    if (response.stop_reason === 'tool_use') {
-      const toolResults: Anthropic.MessageParam = { role: 'user', content: [] };
+    messages.push(msg);
 
-      for (const block of response.content) {
-        if (block.type !== 'tool_use') continue;
+    for (const call of toolCalls) {
+      if (call.type !== 'function') continue;
 
-        console.log(`  Tool called: ${block.name}`);
-
-        if (block.name === 'already_up_to_date') {
-          const input = block.input as { first_gsm_name: string; last_file_name: string };
-          console.log(`\nAlready up to date!`);
-          console.log(`   GSM Arena #1: "${input.first_gsm_name}"`);
-          console.log(`   Last in file: "${input.last_file_name}"`);
-          console.log(`   No new devices. Exiting without PR.`);
-
-          (toolResults.content as Anthropic.ToolResultBlockParam[]).push({
-            type: 'tool_result',
-            tool_use_id: block.id,
-            content: 'Early-exit confirmed. Everything is up to date. Task complete.',
-          });
-
-          messages.push({ role: 'assistant', content: response.content });
-          messages.push(toolResults);
-          return [];
-        }
-
-        if (block.name === 'report_devices') {
-          const input = block.input as { devices: NewDevice[] };
-          newDevices = input.devices || [];
-          console.log(`\nAgent reported ${newDevices.length} new device(s):`);
-          newDevices.forEach((d) =>
-            console.log(`   + ${d.name} (${d.type}) — ${d.releaseDate} — ${d.models.length} model(s)`),
-          );
-
-          (toolResults.content as Anthropic.ToolResultBlockParam[]).push({
-            type: 'tool_result',
-            tool_use_id: block.id,
-            content: `Received ${newDevices.length} device(s). Task complete.`,
-          });
-
-          messages.push({ role: 'assistant', content: response.content });
-          messages.push(toolResults);
-          return newDevices;
-        }
-
-        try {
-          const result = await mcp.callTool(block.name, block.input as Record<string, unknown>);
-          (toolResults.content as Anthropic.ToolResultBlockParam[]).push({
-            type: 'tool_result',
-            tool_use_id: block.id,
-            content: result.slice(0, MAX_TOOL_RESULT_CHARS),
-          });
-        } catch (err: unknown) {
-          const message = err instanceof Error ? err.message : String(err);
-          console.warn(`  MCP tool error (${block.name}): ${message}`);
-          (toolResults.content as Anthropic.ToolResultBlockParam[]).push({
-            type: 'tool_result',
-            tool_use_id: block.id,
-            content: `Error in ${block.name}: ${message}. You may retry once or skip this step.`,
-            is_error: true,
-          });
-        }
+      const name = call.function.name;
+      let args: Record<string, unknown>;
+      try {
+        args = JSON.parse(call.function.arguments || '{}');
+      } catch {
+        args = {};
       }
 
-      messages.push({ role: 'assistant', content: response.content });
-      messages.push(toolResults);
+      console.log(`  Tool called: ${name}`);
+
+      if (name === 'already_up_to_date') {
+        const input = args as { first_gsm_name?: string; last_file_name?: string };
+        console.log(`\nAlready up to date!`);
+        console.log(`   GSM Arena #1: "${input.first_gsm_name}"`);
+        console.log(`   Last in file: "${input.last_file_name}"`);
+        console.log(`   No new devices. Exiting without PR.`);
+
+        messages.push({
+          role: 'tool',
+          tool_call_id: call.id,
+          content: 'Early-exit confirmed. Everything is up to date. Task complete.',
+        });
+        return [];
+      }
+
+      if (name === 'report_devices') {
+        const input = args as { devices?: NewDevice[] };
+        newDevices = input.devices || [];
+        console.log(`\nAgent reported ${newDevices.length} new device(s):`);
+        newDevices.forEach((d) =>
+          console.log(`   + ${d.name} (${d.type}) ${d.releaseDate} ${d.models.length} model(s)`),
+        );
+
+        messages.push({
+          role: 'tool',
+          tool_call_id: call.id,
+          content: `Received ${newDevices.length} device(s). Task complete.`,
+        });
+        return newDevices;
+      }
+
+      try {
+        const result = await mcp.callTool(name, args);
+        messages.push({
+          role: 'tool',
+          tool_call_id: call.id,
+          content: result.slice(0, MAX_TOOL_RESULT_CHARS),
+        });
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.warn(`  MCP tool error (${name}): ${message}`);
+        messages.push({
+          role: 'tool',
+          tool_call_id: call.id,
+          content: `Error in ${name}: ${message}. You may retry once or skip this step.`,
+        });
+      }
     }
   }
 

@@ -4,7 +4,7 @@ import { PlaywrightMCPClient } from '../services/mcp.js';
 import { fetchCurrentFile, fetchPreviousYearFile, createPR } from '../services/github.js';
 import { appendToFile, buildNewFile } from '../utils/device.js';
 import { sortByReleaseDate, parseExistingNames, parseLastExistingName } from '../utils/parse.js';
-import { GITHUB_TOKEN, ANTHROPIC_API_KEY, REPO_OWNER, REPO_NAME, TARGET_FILE_PATH, PREVIOUS_YEAR_FILE_PATH, CURRENT_YEAR } from '../config.js';
+import { GITHUB_TOKEN, COMET_API_KEY, REPO_OWNER, REPO_NAME, TARGET_FILE_PATH, PREVIOUS_YEAR_FILE_PATH, CURRENT_YEAR } from '../config.js';
 import { runAgent } from './agent.js';
 
 async function main(): Promise<void> {
@@ -12,7 +12,7 @@ async function main(): Promise<void> {
   console.log(`Target: ${REPO_OWNER}/${REPO_NAME}/${TARGET_FILE_PATH}\n`);
 
   if (!GITHUB_TOKEN) throw new Error('GITHUB_TOKEN environment variable is required.');
-  if (!ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY environment variable is required.');
+  if (!COMET_API_KEY) throw new Error('COMET_API_KEY environment variable is required.');
 
   const octokit = new Octokit({ auth: GITHUB_TOKEN });
 

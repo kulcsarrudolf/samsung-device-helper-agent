@@ -31,7 +31,7 @@ Claude controls the browser via the [Playwright MCP](https://github.com/microsof
 
 ```bash
 yarn install
-yarn init:env   # creates .env with placeholder values — replace them with your actual tokens
+yarn init:env   # creates .env from .env.example, or backfills any missing keys into an existing .env
 ```
 
 ## Environment variables

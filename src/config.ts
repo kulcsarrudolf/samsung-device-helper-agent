@@ -19,4 +19,7 @@ export const COMET_BASE_URL = process.env.COMET_BASE_URL ?? 'https://api.cometap
 export const LLM_MODEL = process.env.LLM_MODEL ?? 'claude-haiku-4-5-20251001';
 export const DRY_RUN = process.env.DRY_RUN === 'true' || process.env.DRY_RUN === '1';
 
+// LangChain/LangGraph read the LANGSMITH_* env vars directly; this is only used for a startup log.
+export const LANGSMITH_TRACING = process.env.LANGSMITH_TRACING === 'true';
+
 export const GSM_ARENA_SAMSUNG_URL = 'https://www.gsmarena.com/samsung-phones-9.php#anchor';

@@ -9,7 +9,7 @@ const KEY_REGEX = /^\s*#?\s*([A-Z_][A-Z0-9_]*)=/;
 
 function keyOf(line: string): string | null {
   const match = line.match(KEY_REGEX);
-  return match ? match[1] : null;
+  return match?.[1] ?? null;
 }
 
 if (!fs.existsSync(EXAMPLE)) {

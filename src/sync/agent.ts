@@ -185,7 +185,10 @@ export async function runAgent(
       messages,
     });
 
-    const msg = response.choices[0].message;
+    const msg = response.choices[0]?.message;
+    if (!msg) {
+      throw new Error('LLM response contained no choices');
+    }
 
     if (msg.content && msg.content.trim()) {
       console.log(`[Agent] ${msg.content.trim()}`);

@@ -3,9 +3,7 @@ import { EXPORT_CONST_NAME } from '../config.js';
 
 export function formatDevice(d: NewDevice): string {
   const modelsStr =
-    d.models.length > 0
-      ? `\n      ${d.models.map((m) => `"${m}"`).join(',\n      ')}\n    `
-      : '';
+    d.models.length > 0 ? `\n      ${d.models.map((m) => `"${m}"`).join(',\n      ')}\n    ` : '';
   return `  {
     name: "${d.name}",
     releaseDate: "${d.releaseDate}",

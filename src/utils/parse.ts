@@ -1,7 +1,10 @@
 import type { NewDevice } from '../types.js';
 
 function normalizeName(name: string): string {
-  return name.replace(/^Samsung\s+/i, '').toLowerCase().trim();
+  return name
+    .replace(/^Samsung\s+/i, '')
+    .toLowerCase()
+    .trim();
 }
 
 export function parseExistingNames(content: string): Set<string> {

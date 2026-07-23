@@ -1,12 +1,23 @@
 import { Octokit } from '@octokit/rest';
 import type { NewDevice } from '../types.js';
-import { TARGET_FILE_PATH, PREVIOUS_YEAR_FILE_PATH, REPO_OWNER, REPO_NAME, CURRENT_YEAR, GSM_ARENA_SAMSUNG_URL } from '../config.js';
+import {
+  TARGET_FILE_PATH,
+  PREVIOUS_YEAR_FILE_PATH,
+  REPO_OWNER,
+  REPO_NAME,
+  CURRENT_YEAR,
+  GSM_ARENA_SAMSUNG_URL,
+} from '../config.js';
 
 export async function fetchCurrentFile(
   octokit: Octokit,
 ): Promise<{ content: string; sha: string } | null> {
   try {
-    const res = await octokit.repos.getContent({ owner: REPO_OWNER, repo: REPO_NAME, path: TARGET_FILE_PATH });
+    const res = await octokit.repos.getContent({
+      owner: REPO_OWNER,
+      repo: REPO_NAME,
+      path: TARGET_FILE_PATH,
+    });
     const file = res.data as { content: string; sha: string };
     const content = Buffer.from(file.content, 'base64').toString('utf-8');
     return { content, sha: file.sha };
@@ -16,11 +27,13 @@ export async function fetchCurrentFile(
   }
 }
 
-export async function fetchPreviousYearFile(
-  octokit: Octokit,
-): Promise<{ content: string } | null> {
+export async function fetchPreviousYearFile(octokit: Octokit): Promise<{ content: string } | null> {
   try {
-    const res = await octokit.repos.getContent({ owner: REPO_OWNER, repo: REPO_NAME, path: PREVIOUS_YEAR_FILE_PATH });
+    const res = await octokit.repos.getContent({
+      owner: REPO_OWNER,
+      repo: REPO_NAME,
+      path: PREVIOUS_YEAR_FILE_PATH,
+    });
     const file = res.data as { content: string };
     const content = Buffer.from(file.content, 'base64').toString('utf-8');
     return { content };
@@ -37,7 +50,11 @@ function deviceSummary(devices: NewDevice[], max = 2): string {
 }
 
 function formatDeviceSection(devices: NewDevice[]): string {
-  const typeLabel: Record<string, string> = { phone: '📱 Phones', tablet: '📟 Tablets', watch: '⌚ Watches' };
+  const typeLabel: Record<string, string> = {
+    phone: '📱 Phones',
+    tablet: '📟 Tablets',
+    watch: '⌚ Watches',
+  };
   const groups: Record<string, NewDevice[]> = {};
   for (const d of devices) {
     (groups[d.type] ??= []).push(d);
@@ -68,15 +85,30 @@ export async function createPR(
   const repoData = await octokit.repos.get({ owner: REPO_OWNER, repo: REPO_NAME });
   const defaultBranch = repoData.data.default_branch;
 
-  const refData = await octokit.git.getRef({ owner: REPO_OWNER, repo: REPO_NAME, ref: `heads/${defaultBranch}` });
+  const refData = await octokit.git.getRef({
+    owner: REPO_OWNER,
+    repo: REPO_NAME,
+    ref: `heads/${defaultBranch}`,
+  });
   const latestCommitSha = refData.data.object.sha;
 
   try {
-    await octokit.git.createRef({ owner: REPO_OWNER, repo: REPO_NAME, ref: `refs/heads/${branch}`, sha: latestCommitSha });
+    await octokit.git.createRef({
+      owner: REPO_OWNER,
+      repo: REPO_NAME,
+      ref: `refs/heads/${branch}`,
+      sha: latestCommitSha,
+    });
     console.log(`   Branch created: ${branch}`);
   } catch (err: unknown) {
     if ((err as { status?: number }).status === 422) {
-      await octokit.git.updateRef({ owner: REPO_OWNER, repo: REPO_NAME, ref: `heads/${branch}`, sha: latestCommitSha, force: true });
+      await octokit.git.updateRef({
+        owner: REPO_OWNER,
+        repo: REPO_NAME,
+        ref: `heads/${branch}`,
+        sha: latestCommitSha,
+        force: true,
+      });
       console.log(`   Branch already existed, reset to latest: ${branch}`);
     } else {
       throw err;

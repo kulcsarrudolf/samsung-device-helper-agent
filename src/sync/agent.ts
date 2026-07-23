@@ -1,7 +1,13 @@
 import OpenAI from 'openai';
 import type { PlaywrightMCPClient } from '../services/mcp.js';
 import type { NewDevice } from '../types.js';
-import { COMET_API_KEY, COMET_BASE_URL, LLM_MODEL, CURRENT_YEAR, GSM_ARENA_SAMSUNG_URL } from '../config.js';
+import {
+  COMET_API_KEY,
+  COMET_BASE_URL,
+  LLM_MODEL,
+  CURRENT_YEAR,
+  GSM_ARENA_SAMSUNG_URL,
+} from '../config.js';
 
 type ChatTool = OpenAI.Chat.Completions.ChatCompletionTool;
 type ChatMessage = OpenAI.Chat.Completions.ChatCompletionMessageParam;
@@ -30,39 +36,39 @@ function buildTools(mcp: Awaited<ReturnType<PlaywrightMCPClient['listTools']>>):
       parameters: {
         type: 'object' as const,
         properties: {
-        devices: {
-          type: 'array',
-          description: 'List of new devices to add. Empty array if nothing new.',
-          items: {
-            type: 'object',
-            properties: {
-              name: {
-                type: 'string',
-                description: 'Device name WITHOUT "Samsung " prefix. e.g. "Galaxy S26 Ultra"',
+          devices: {
+            type: 'array',
+            description: 'List of new devices to add. Empty array if nothing new.',
+            items: {
+              type: 'object',
+              properties: {
+                name: {
+                  type: 'string',
+                  description: 'Device name WITHOUT "Samsung " prefix. e.g. "Galaxy S26 Ultra"',
+                },
+                releaseDate: {
+                  type: 'string',
+                  description:
+                    'Release date in MM-DD-YYYY format (zero-padded). e.g. "03-06-2026". ' +
+                    'Accept both confirmed (Released) and expected (Exp. release) dates.',
+                },
+                type: {
+                  type: 'string',
+                  enum: ['phone', 'tablet', 'watch'],
+                  description:
+                    '"Tab" in name → "tablet". "Watch" in name → "watch". Everything else → "phone".',
+                },
+                models: {
+                  type: 'array',
+                  items: { type: 'string' },
+                  description:
+                    'All SM-XXXX model numbers from the Models row. Include ALL regional variants.',
+                },
               },
-              releaseDate: {
-                type: 'string',
-                description:
-                  'Release date in MM-DD-YYYY format (zero-padded). e.g. "03-06-2026". ' +
-                  'Accept both confirmed (Released) and expected (Exp. release) dates.',
-              },
-              type: {
-                type: 'string',
-                enum: ['phone', 'tablet', 'watch'],
-                description:
-                  '"Tab" in name → "tablet". "Watch" in name → "watch". Everything else → "phone".',
-              },
-              models: {
-                type: 'array',
-                items: { type: 'string' },
-                description:
-                  'All SM-XXXX model numbers from the Models row. Include ALL regional variants.',
-              },
+              required: ['name', 'releaseDate', 'type', 'models'],
             },
-            required: ['name', 'releaseDate', 'type', 'models'],
           },
         },
-      },
         required: ['devices'],
       },
     },
@@ -79,7 +85,10 @@ function buildTools(mcp: Awaited<ReturnType<PlaywrightMCPClient['listTools']>>):
         type: 'object' as const,
         properties: {
           first_gsm_name: { type: 'string', description: 'Newest device name on GSM Arena' },
-          last_file_name: { type: 'string', description: 'Last device name in our repository file' },
+          last_file_name: {
+            type: 'string',
+            description: 'Last device name in our repository file',
+          },
         },
         required: ['first_gsm_name', 'last_file_name'],
       },
@@ -90,8 +99,9 @@ function buildTools(mcp: Awaited<ReturnType<PlaywrightMCPClient['listTools']>>):
 }
 
 function buildSystemPrompt(existingNames: Set<string>, stopAtName: string | null): string {
-  const earlyExitInstruction = existingNames.size > 0
-    ? `
+  const earlyExitInstruction =
+    existingNames.size > 0
+      ? `
 ⚡ EARLY EXIT CHECK — Perform this FIRST before visiting any individual device pages:
    1. Navigate to the GSM Arena Samsung listing page (URL provided below).
    2. Read the first 10 devices listed (newest-first).
@@ -99,7 +109,7 @@ function buildSystemPrompt(existingNames: Set<string>, stopAtName: string | null
    4. If ALL of the first 10 devices are already in our list → call already_up_to_date immediately and stop.
    5. If ANY device is NOT in our list → continue with the full scraping steps below.
 `
-    : '';
+      : '';
 
   return `You are a Samsung device data sync agent. Your job is to detect new Samsung devices on GSM Arena and extract their structured details for our repository file.
 ${earlyExitInstruction}
@@ -186,7 +196,7 @@ export async function runAgent(
     if (toolCalls.length === 0) {
       throw new Error(
         'Agent ended its turn without calling report_devices or already_up_to_date. ' +
-        'This usually means the browser failed to load. Check that Playwright is installed: npx playwright install chromium',
+          'This usually means the browser failed to load. Check that Playwright is installed: npx playwright install chromium',
       );
     }
 
@@ -256,7 +266,9 @@ export async function runAgent(
   }
 
   if (iterations >= MAX_ITERATIONS) {
-    console.warn(`\nAgent hit max iterations (${MAX_ITERATIONS}). Returning ${newDevices.length} partial result(s).`);
+    console.warn(
+      `\nAgent hit max iterations (${MAX_ITERATIONS}). Returning ${newDevices.length} partial result(s).`,
+    );
   }
 
   return newDevices;

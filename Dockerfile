@@ -12,7 +12,7 @@ RUN corepack enable && corepack prepare yarn@4.6.0 --activate
 COPY package.json yarn.lock .yarnrc.yml ./
 RUN yarn install --immutable
 
-COPY tsconfig.json ./
+COPY tsconfig.json tsconfig.build.json ./
 COPY src/ ./src/
 RUN yarn build
 

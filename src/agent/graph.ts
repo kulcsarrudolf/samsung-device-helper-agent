@@ -1,4 +1,10 @@
-import { StateGraph, START, END } from '@langchain/langgraph';
+import {
+  StateGraph,
+  START,
+  END,
+  type BaseCheckpointSaver,
+  type RetryPolicy,
+} from '@langchain/langgraph';
 import { Octokit } from '@octokit/rest';
 import { SyncState, type SyncStateType } from './state.js';
 import { createPlaywrightMcpClient } from './tools.js';
@@ -132,8 +138,15 @@ async function format(state: SyncStateType): Promise<Partial<SyncStateType>> {
   return { content };
 }
 
-/** Commit the file and open the PR. */
+/** Commit the file and open the PR, unless running in dry-run mode. */
 async function publish(state: SyncStateType): Promise<Partial<SyncStateType>> {
+  if (state.dryRun) {
+    console.log('\n[dry-run] Skipping PR creation. Generated file content:\n');
+    console.log(state.content);
+    console.log(`\n[dry-run] Would open a PR adding ${String(state.sorted.length)} device(s).`);
+    return { prUrl: null };
+  }
+
   console.log('\nCreating GitHub Pull Request...');
   const octokit = new Octokit({ auth: GITHUB_TOKEN });
   const prUrl = await createPR(octokit, state.content, state.existingSha, state.sorted);
@@ -147,17 +160,23 @@ function hasNewDevices(state: SyncStateType): typeof END | 'sort' {
 
 export { fetchExisting, resolveKnownNames, scrape, hardDedup, sort, buildContent, format, publish };
 
-/** Build and compile the sync pipeline graph. */
-export function buildGraph() {
+// Retry transient failures on the network-bound nodes (GitHub reads, target-repo clone, PR).
+const NETWORK_RETRY: RetryPolicy = { maxAttempts: 3 };
+
+/**
+ * Build and compile the sync pipeline graph. Pass a checkpointer to make the run resumable
+ * across restarts; omit it (e.g. in tests) for a one-shot, in-memory run.
+ */
+export function buildGraph(checkpointer?: BaseCheckpointSaver) {
   return new StateGraph(SyncState)
-    .addNode('fetchExisting', fetchExisting)
-    .addNode('resolveKnownNames', resolveKnownNames)
+    .addNode('fetchExisting', fetchExisting, { retryPolicy: NETWORK_RETRY })
+    .addNode('resolveKnownNames', resolveKnownNames, { retryPolicy: NETWORK_RETRY })
     .addNode('scrape', scrape)
     .addNode('hardDedup', hardDedup)
     .addNode('sort', sort)
     .addNode('buildContent', buildContent)
-    .addNode('format', format)
-    .addNode('publish', publish)
+    .addNode('format', format, { retryPolicy: NETWORK_RETRY })
+    .addNode('publish', publish, { retryPolicy: NETWORK_RETRY })
     .addEdge(START, 'fetchExisting')
     .addEdge('fetchExisting', 'resolveKnownNames')
     .addEdge('resolveKnownNames', 'scrape')
@@ -167,5 +186,5 @@ export function buildGraph() {
     .addEdge('buildContent', 'format')
     .addEdge('format', 'publish')
     .addEdge('publish', END)
-    .compile();
+    .compile(checkpointer ? { checkpointer } : undefined);
 }

@@ -36,14 +36,15 @@ yarn init:env   # creates .env from .env.example, or backfills any missing keys 
 
 ## Environment variables
 
-| Variable         | Required | Default                       | Description                                                                        |
-| ---------------- | -------- | ----------------------------- | ---------------------------------------------------------------------------------- |
-| `GITHUB_TOKEN`   | Yes      | (none)                        | GitHub PAT with `repo` read/write access                                           |
-| `COMET_API_KEY`  | Yes      | (none)                        | API key from [cometapi.com](https://www.cometapi.com/) (single key for all models) |
-| `COMET_BASE_URL` | No       | `https://api.cometapi.com/v1` | OpenAI-compatible LLM endpoint; override to use another gateway                    |
-| `LLM_MODEL`      | No       | `claude-haiku-4-5-20251001`   | Model id passed to the endpoint (any model Comet exposes)                          |
-| `REPO_OWNER`     | No       | `kulcsarrudolf`               | GitHub username of the target repo                                                 |
-| `REPO_NAME`      | No       | `samsung-device-helper`       | Target repository name                                                             |
+| Variable         | Required | Default                       | Description                                                                             |
+| ---------------- | -------- | ----------------------------- | --------------------------------------------------------------------------------------- |
+| `GITHUB_TOKEN`   | Yes      | (none)                        | GitHub PAT with `repo` read/write access                                                |
+| `COMET_API_KEY`  | Yes      | (none)                        | API key from [cometapi.com](https://www.cometapi.com/) (single key for all models)      |
+| `COMET_BASE_URL` | No       | `https://api.cometapi.com/v1` | OpenAI-compatible LLM endpoint; override to use another gateway                         |
+| `LLM_MODEL`      | No       | `claude-haiku-4-5-20251001`   | Model id passed to the endpoint (any model Comet exposes)                               |
+| `REPO_OWNER`     | No       | `kulcsarrudolf`               | GitHub username of the target repo                                                      |
+| `REPO_NAME`      | No       | `samsung-device-helper`       | Target repository name                                                                  |
+| `DRY_RUN`        | No       | `false`                       | When `true`, run the full pipeline but print the generated file instead of opening a PR |
 
 ### Generating the GitHub token
 
@@ -72,6 +73,18 @@ GITHUB_TOKEN=... COMET_API_KEY=... yarn sync
 
 Environment variables are loaded natively via `process.loadEnvFile()` (no dotenv dependency).
 When no `.env` file exists, the process environment is used as-is, which is how Docker supplies them.
+
+### Dry run
+
+Run the full pipeline (fetch, scrape, build, format) without committing or opening a PR. The generated file is printed instead:
+
+```bash
+yarn sync --dry-run      # or: DRY_RUN=true yarn sync
+```
+
+### Resuming an interrupted run
+
+The pipeline is a LangGraph `StateGraph` checkpointed to `.langgraph/checkpoints.json`. Each run uses a thread id that is stable within a calendar day. If a run fails partway (e.g. the GitHub PR step errors after scraping), re-running `yarn sync` the same day resumes from the failed step without re-scraping. A new day starts a fresh run.
 
 ## Other scripts
 

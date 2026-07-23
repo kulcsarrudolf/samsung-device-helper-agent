@@ -29,6 +29,8 @@ export const SyncState = Annotation.Root({
   content: Annotation<string>({ reducer: (_p, n) => n, default: () => '' }),
   /** URL of the opened PR, or null when nothing was published. */
   prUrl: Annotation<string | null>({ reducer: (_p, n) => n, default: () => null }),
+  /** When true, the publish node prints the generated file instead of opening a PR. */
+  dryRun: Annotation<boolean>({ reducer: (_p, n) => n, default: () => false }),
 });
 
 export type SyncStateType = typeof SyncState.State;

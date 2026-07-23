@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hardDedup, sort, buildContent } from './graph.js';
+import { hardDedup, sort, buildContent, publish } from './graph.js';
 import type { SyncStateType } from './state.js';
 import type { NewDevice } from './schema.js';
 
@@ -20,6 +20,7 @@ const baseState = (overrides: Partial<SyncStateType>): SyncStateType => ({
   sorted: [],
   content: '',
   prUrl: null,
+  dryRun: false,
   ...overrides,
 });
 
@@ -66,5 +67,16 @@ describe('buildContent', () => {
     expect(content).toContain('Galaxy S25');
     expect(content).toContain('Galaxy S26');
     expect(content?.trimEnd().endsWith('];')).toBe(true);
+  });
+});
+
+describe('publish', () => {
+  it('skips PR creation and returns no prUrl in dry-run mode', async () => {
+    const state = baseState({
+      dryRun: true,
+      content: 'export const x = [];',
+      sorted: [device('Galaxy S26', '02-25-2026')],
+    });
+    await expect(publish(state)).resolves.toEqual({ prUrl: null });
   });
 });

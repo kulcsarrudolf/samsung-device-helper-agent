@@ -8,7 +8,7 @@ const TARGET = '.env';
 const KEY_REGEX = /^\s*#?\s*([A-Z_][A-Z0-9_]*)=/;
 
 function keyOf(line: string): string | null {
-  const match = line.match(KEY_REGEX);
+  const match = KEY_REGEX.exec(line);
   return match?.[1] ?? null;
 }
 

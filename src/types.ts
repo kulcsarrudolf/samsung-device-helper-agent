@@ -9,7 +9,7 @@ export interface MCPResponse {
   id: number;
   result?: {
     tools?: MCPTool[];
-    content?: Array<{ type: string; text?: string }>;
+    content?: { type: string; text?: string }[];
   };
   error?: { code: number; message: string };
 }

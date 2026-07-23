@@ -24,8 +24,8 @@ Claude controls the browser via the [Playwright MCP](https://github.com/microsof
 
 ## Requirements
 
-- Node.js 24+
-- Yarn 4+
+- Node.js 20+ (Docker image uses Node 24 LTS)
+- Yarn 4 (via Corepack; pinned to 4.17.1 by the `packageManager` field)
 
 ## Setup
 

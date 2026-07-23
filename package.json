@@ -19,7 +19,9 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "yarn typecheck && yarn lint && yarn format:check"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "yarn typecheck && yarn lint && yarn format:check && yarn test"
   },
   "devDependencies": {
     "@types/node": "^22.20.1",
@@ -28,7 +30,8 @@
     "prettier": "^3.9.6",
     "tsx": "^4.23.1",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.65.0"
+    "typescript-eslint": "^8.65.0",
+    "vitest": "^4.1.10"
   },
   "dependencies": {
     "@octokit/rest": "^22.0.1",

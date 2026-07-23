@@ -73,14 +73,19 @@ function formatDeviceSection(devices: NewDevice[]): string {
     .join('\n\n');
 }
 
+export interface CommitFile {
+  path: string;
+  content: string;
+}
+
 export async function createPR(
   octokit: Octokit,
-  updatedContent: string,
-  fileSha: string | null,
+  files: CommitFile[],
   newDevices: NewDevice[],
 ): Promise<string> {
   const date = new Date().toISOString().split('T')[0];
   const branch = `feat/sync-devices-${date}`;
+  const summary = deviceSummary(newDevices);
 
   const repoData = await octokit.repos.get({ owner: REPO_OWNER, repo: REPO_NAME });
   const defaultBranch = repoData.data.default_branch;
@@ -92,12 +97,52 @@ export async function createPR(
   });
   const latestCommitSha = refData.data.object.sha;
 
+  // Commit every file (data file + regenerated src/generated) as one commit via the Git Data API:
+  // a blob per file, a tree layered on the base commit's tree, then a commit and a branch ref.
+  const baseCommit = await octokit.git.getCommit({
+    owner: REPO_OWNER,
+    repo: REPO_NAME,
+    commit_sha: latestCommitSha,
+  });
+
+  const tree = await Promise.all(
+    files.map(async (file) => {
+      const blob = await octokit.git.createBlob({
+        owner: REPO_OWNER,
+        repo: REPO_NAME,
+        content: Buffer.from(file.content).toString('base64'),
+        encoding: 'base64',
+      });
+      return {
+        path: file.path,
+        mode: '100644' as const,
+        type: 'blob' as const,
+        sha: blob.data.sha,
+      };
+    }),
+  );
+
+  const newTree = await octokit.git.createTree({
+    owner: REPO_OWNER,
+    repo: REPO_NAME,
+    base_tree: baseCommit.data.tree.sha,
+    tree,
+  });
+
+  const commit = await octokit.git.createCommit({
+    owner: REPO_OWNER,
+    repo: REPO_NAME,
+    message: `feat: add ${summary} for ${CURRENT_YEAR}`,
+    tree: newTree.data.sha,
+    parents: [latestCommitSha],
+  });
+
   try {
     await octokit.git.createRef({
       owner: REPO_OWNER,
       repo: REPO_NAME,
       ref: `refs/heads/${branch}`,
-      sha: latestCommitSha,
+      sha: commit.data.sha,
     });
     console.log(`   Branch created: ${branch}`);
   } catch (err: unknown) {
@@ -106,27 +151,15 @@ export async function createPR(
         owner: REPO_OWNER,
         repo: REPO_NAME,
         ref: `heads/${branch}`,
-        sha: latestCommitSha,
+        sha: commit.data.sha,
         force: true,
       });
-      console.log(`   Branch already existed, reset to latest: ${branch}`);
+      console.log(`   Branch already existed, reset to new commit: ${branch}`);
     } else {
       throw err;
     }
   }
-
-  const summary = deviceSummary(newDevices);
-
-  await octokit.repos.createOrUpdateFileContents({
-    owner: REPO_OWNER,
-    repo: REPO_NAME,
-    path: TARGET_FILE_PATH,
-    message: `feat: add ${summary} for ${CURRENT_YEAR}`,
-    content: Buffer.from(updatedContent).toString('base64'),
-    branch,
-    ...(fileSha ? { sha: fileSha } : {}),
-  });
-  console.log(`   File committed to branch`);
+  console.log(`   Committed ${String(files.length)} file(s) to branch`);
 
   const pr = await octokit.pulls.create({
     owner: REPO_OWNER,
@@ -144,7 +177,7 @@ ${formatDeviceSection(newDevices)}
 
 ---
 *Source: [GSM Arena Samsung listings](${GSM_ARENA_SAMSUNG_URL})*
-*File updated: \`${TARGET_FILE_PATH}\`*`,
+*Updated \`${TARGET_FILE_PATH}\` and regenerated \`src/generated/*\`.*`,
   });
 
   return pr.data.html_url;

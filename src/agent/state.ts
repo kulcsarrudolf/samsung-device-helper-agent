@@ -25,8 +25,16 @@ export const SyncState = Annotation.Root({
   newDevices: Annotation<NewDevice[]>({ reducer: (_p, n) => n, default: () => [] }),
   /** Devices to add, sorted oldest to newest. */
   sorted: Annotation<NewDevice[]>({ reducer: (_p, n) => n, default: () => [] }),
-  /** Generated (and later formatted) file content for the PR. */
+  /** Generated (and later formatted) content of the per-year data file. */
   content: Annotation<string>({ reducer: (_p, n) => n, default: () => '' }),
+  /**
+   * Every file the PR must commit: the per-year data file plus the regenerated `src/generated/*`
+   * modules, each as `{ path, content }`. Populated by the `generate` node.
+   */
+  outputFiles: Annotation<{ path: string; content: string }[]>({
+    reducer: (_p, n) => n,
+    default: () => [],
+  }),
   /** URL of the opened PR, or null when nothing was published. */
   prUrl: Annotation<string | null>({ reducer: (_p, n) => n, default: () => null }),
   /** When true, the publish node prints the generated file instead of opening a PR. */

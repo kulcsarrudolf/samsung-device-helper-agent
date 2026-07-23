@@ -3,6 +3,18 @@ export const TARGET_FILE_PATH = `src/data/samsung-devices-${CURRENT_YEAR}.ts`;
 export const PREVIOUS_YEAR_FILE_PATH = `src/data/samsung-devices-${CURRENT_YEAR - 1}.ts`;
 export const EXPORT_CONST_NAME = `samsungDevices${CURRENT_YEAR}`;
 
+/**
+ * Derived data modules the target repo commits alongside the per-year data file. They are
+ * produced from the data by the target's `scripts/generate-data.ts` and must be regenerated
+ * and included in every PR, or the target's CI (`git diff --exit-code src/generated`) fails.
+ */
+export const GENERATED_FILES = [
+  'src/generated/phones.ts',
+  'src/generated/tablets.ts',
+  'src/generated/watches.ts',
+  'src/generated/model-names.ts',
+] as const;
+
 function requireEnv(name: string): string {
   const value = process.env[name];
   if (!value) {

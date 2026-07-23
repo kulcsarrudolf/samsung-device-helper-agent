@@ -4,7 +4,15 @@ import { PlaywrightMCPClient } from '../services/mcp.js';
 import { fetchCurrentFile, fetchPreviousYearFile, createPR } from '../services/github.js';
 import { appendToFile, buildNewFile } from '../utils/device.js';
 import { sortByReleaseDate, parseExistingNames, parseLastExistingName } from '../utils/parse.js';
-import { GITHUB_TOKEN, COMET_API_KEY, REPO_OWNER, REPO_NAME, TARGET_FILE_PATH, PREVIOUS_YEAR_FILE_PATH, CURRENT_YEAR } from '../config.js';
+import {
+  GITHUB_TOKEN,
+  COMET_API_KEY,
+  REPO_OWNER,
+  REPO_NAME,
+  TARGET_FILE_PATH,
+  PREVIOUS_YEAR_FILE_PATH,
+  CURRENT_YEAR,
+} from '../config.js';
 import { runAgent } from './agent.js';
 
 async function main(): Promise<void> {
@@ -24,7 +32,9 @@ async function main(): Promise<void> {
   let stopAtName: string | null = existing ? parseLastExistingName(existing.content) : null;
 
   if (existing) {
-    console.log(`   Found existing file (sha: ${existing.sha.slice(0, 7)}) — ${existingNames.size} known device(s):`);
+    console.log(
+      `   Found existing file (sha: ${existing.sha.slice(0, 7)}) — ${existingNames.size} known device(s):`,
+    );
     Array.from(existingNames).forEach((name) => console.log(`     - ${name}`));
   } else {
     console.log(`   No ${CURRENT_YEAR} file found — will create from scratch.`);
@@ -42,9 +52,13 @@ async function main(): Promise<void> {
       prevNames.forEach((n) => knownNames.add(n));
       if (!existing) {
         stopAtName = parseLastExistingName(previousYear.content);
-        console.log(`   Found previous year file (${prevNames.size} device(s)) — stop marker: "${stopAtName}"`);
+        console.log(
+          `   Found previous year file (${prevNames.size} device(s)) — stop marker: "${stopAtName}"`,
+        );
       } else {
-        console.log(`   Found previous year file — added ${prevNames.size} device(s) to known set for early-exit check.`);
+        console.log(
+          `   Found previous year file — added ${prevNames.size} device(s) to known set for early-exit check.`,
+        );
       }
     } else {
       console.log(`   No previous year file found.`);
@@ -69,7 +83,15 @@ async function main(): Promise<void> {
   // regardless of what the agent reported.
   if (existingNames.size > 0) {
     const before = newDevices.length;
-    newDevices = newDevices.filter((d) => !existingNames.has(d.name.replace(/^Samsung\s+/i, '').toLowerCase().trim()));
+    newDevices = newDevices.filter(
+      (d) =>
+        !existingNames.has(
+          d.name
+            .replace(/^Samsung\s+/i, '')
+            .toLowerCase()
+            .trim(),
+        ),
+    );
     const skipped = before - newDevices.length;
     if (skipped > 0) console.log(`   Skipped ${skipped} device(s) already in file.`);
   }

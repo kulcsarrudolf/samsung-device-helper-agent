@@ -24,7 +24,7 @@ Claude controls the browser via the [Playwright MCP](https://github.com/microsof
 
 ## Requirements
 
-- Node.js 20+ (Docker image uses Node 24 LTS)
+- Node.js 22+ (Docker image uses Node 24 LTS)
 - Yarn 4 (via Corepack; pinned to 4.17.1 by the `packageManager` field)
 
 ## Setup
@@ -36,14 +36,14 @@ yarn init:env   # creates .env from .env.example, or backfills any missing keys 
 
 ## Environment variables
 
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `GITHUB_TOKEN` | Yes | (none) | GitHub PAT with `repo` read/write access |
-| `COMET_API_KEY` | Yes | (none) | API key from [cometapi.com](https://www.cometapi.com/) (single key for all models) |
-| `COMET_BASE_URL` | No | `https://api.cometapi.com/v1` | OpenAI-compatible LLM endpoint; override to use another gateway |
-| `LLM_MODEL` | No | `claude-haiku-4-5-20251001` | Model id passed to the endpoint (any model Comet exposes) |
-| `REPO_OWNER` | No | `kulcsarrudolf` | GitHub username of the target repo |
-| `REPO_NAME` | No | `samsung-device-helper` | Target repository name |
+| Variable         | Required | Default                       | Description                                                                        |
+| ---------------- | -------- | ----------------------------- | ---------------------------------------------------------------------------------- |
+| `GITHUB_TOKEN`   | Yes      | (none)                        | GitHub PAT with `repo` read/write access                                           |
+| `COMET_API_KEY`  | Yes      | (none)                        | API key from [cometapi.com](https://www.cometapi.com/) (single key for all models) |
+| `COMET_BASE_URL` | No       | `https://api.cometapi.com/v1` | OpenAI-compatible LLM endpoint; override to use another gateway                    |
+| `LLM_MODEL`      | No       | `claude-haiku-4-5-20251001`   | Model id passed to the endpoint (any model Comet exposes)                          |
+| `REPO_OWNER`     | No       | `kulcsarrudolf`               | GitHub username of the target repo                                                 |
+| `REPO_NAME`      | No       | `samsung-device-helper`       | Target repository name                                                             |
 
 ### Generating the GitHub token
 

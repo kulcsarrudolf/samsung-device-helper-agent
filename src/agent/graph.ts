@@ -47,15 +47,15 @@ async function fetchExisting(): Promise<Partial<SyncStateType>> {
 
 /**
  * Build the set of names the agent treats as known. Includes the previous-year file when the
- * current-year file is missing or has fewer than 10 devices (the GSM Arena top-10 will then
- * contain previous-year entries).
+ * current-year file is missing or has fewer than deviceLimit devices (the checked top of the
+ * GSM Arena listing will then contain previous-year entries).
  */
 async function resolveKnownNames(state: SyncStateType): Promise<Partial<SyncStateType>> {
   const hasExisting = state.existingContent !== null;
   const knownNames = new Set(state.existingNames);
   let stopAtName = state.stopAtName;
 
-  if (!hasExisting || state.existingNames.length < 10) {
+  if (!hasExisting || state.existingNames.length < state.deviceLimit) {
     console.log(`\nFetching previous year file (${PREVIOUS_YEAR_FILE_PATH})...`);
     const octokit = new Octokit({ auth: GITHUB_TOKEN });
     const previousYear = await fetchPreviousYearFile(octokit);
@@ -87,7 +87,12 @@ async function scrape(state: SyncStateType): Promise<Partial<SyncStateType>> {
   try {
     const tools = await mcpClient.getTools();
     console.log('   MCP server ready');
-    const newDevices = await runScrapeAgent(tools, new Set(state.knownNames), state.stopAtName);
+    const newDevices = await runScrapeAgent(
+      tools,
+      new Set(state.knownNames),
+      state.stopAtName,
+      state.deviceLimit,
+    );
     return { newDevices };
   } finally {
     await mcpClient.close();

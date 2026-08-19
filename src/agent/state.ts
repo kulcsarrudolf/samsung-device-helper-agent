@@ -1,5 +1,6 @@
 import { Annotation } from '@langchain/langgraph';
 import type { NewDevice } from './schema.js';
+import { DEFAULT_DEVICE_LIMIT } from '../config.js';
 
 /**
  * Pipeline state for the sync graph. Every channel is JSON-serializable (plain strings,
@@ -39,6 +40,8 @@ export const SyncState = Annotation.Root({
   prUrl: Annotation<string | null>({ reducer: (_p, n) => n, default: () => null }),
   /** When true, the publish node prints the generated file instead of opening a PR. */
   dryRun: Annotation<boolean>({ reducer: (_p, n) => n, default: () => false }),
+  /** How many of the newest listing entries the agent checks (`yarn sync <n>`). */
+  deviceLimit: Annotation<number>({ reducer: (_p, n) => n, default: () => DEFAULT_DEVICE_LIMIT }),
 });
 
 export type SyncStateType = typeof SyncState.State;

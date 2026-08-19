@@ -1,4 +1,7 @@
 export const CURRENT_YEAR = new Date().getFullYear();
+
+/** How many of the newest GSM Arena listing entries the agent checks by default. */
+export const DEFAULT_DEVICE_LIMIT = 10;
 export const TARGET_FILE_PATH = `src/data/samsung-devices-${CURRENT_YEAR}.ts`;
 export const PREVIOUS_YEAR_FILE_PATH = `src/data/samsung-devices-${CURRENT_YEAR - 1}.ts`;
 export const EXPORT_CONST_NAME = `samsungDevices${CURRENT_YEAR}`;

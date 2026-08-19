@@ -33,11 +33,12 @@ export async function runScrapeAgent(
   tools: (ServerTool | ClientTool)[],
   knownNames: Set<string>,
   stopAtName: string | null,
+  deviceLimit: number,
 ): Promise<NewDevice[]> {
   const agent = createAgent({
     model: createModel(),
     tools,
-    systemPrompt: buildSystemPrompt(knownNames, stopAtName),
+    systemPrompt: buildSystemPrompt(knownNames, stopAtName, deviceLimit),
     responseFormat: ScrapeResultSchema,
     // Logging first: the first middleware is outermost, so it sees tool errors after the
     // truncation middleware has converted them into error ToolMessages.

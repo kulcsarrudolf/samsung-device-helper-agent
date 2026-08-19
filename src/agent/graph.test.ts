@@ -22,6 +22,7 @@ const baseState = (overrides: Partial<SyncStateType>): SyncStateType => ({
   outputFiles: [],
   prUrl: null,
   dryRun: false,
+  deviceLimit: 10,
   ...overrides,
 });
 

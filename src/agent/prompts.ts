@@ -1,14 +1,19 @@
 import { CURRENT_YEAR, GSM_ARENA_SAMSUNG_URL } from '../config.js';
 
-export function buildSystemPrompt(existingNames: Set<string>, stopAtName: string | null): string {
+export function buildSystemPrompt(
+  existingNames: Set<string>,
+  stopAtName: string | null,
+  deviceLimit: number,
+): string {
+  const limit = String(deviceLimit);
   const earlyExitInstruction =
     existingNames.size > 0
       ? `
 EARLY EXIT CHECK. Perform this FIRST before visiting any individual device pages:
    1. Navigate to the GSM Arena Samsung listing page (URL provided below).
-   2. Read the first 10 devices listed (newest-first).
+   2. Read the first ${limit} devices listed (newest-first).
    3. Strip "Samsung " from each name and check case-insensitively against the existing names list below.
-   4. If ALL of the first 10 devices are already in our list: return structured output with upToDate=true and an empty devices array.
+   4. If ALL of the first ${limit} devices are already in our list: return structured output with upToDate=true and an empty devices array.
    5. If ANY device is NOT in our list: continue with the full scraping steps below.
 `
       : '';
@@ -22,7 +27,7 @@ STEP 1. NAVIGATE to the GSM Arena Samsung listing, sorted newest-first:
    After the page loads, verify the "TIME OF RELEASE" tab is active.
    If not, click it to ensure devices are ordered newest-first.
 
-STEP 2. READ the first 10 devices shown on the listing page.
+STEP 2. READ the first ${limit} devices shown on the listing page.
    Note the name and URL slug of each device.
 
 STEP 3. FOR EACH DEVICE, decide whether to scrape its spec page:

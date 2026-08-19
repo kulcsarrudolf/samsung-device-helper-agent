@@ -101,6 +101,17 @@ GITHUB_TOKEN=... COMET_API_KEY=... yarn sync
 Environment variables are loaded natively via `process.loadEnvFile()` (no dotenv dependency).
 When no `.env` file exists, the process environment is used as-is, which is how Docker supplies them.
 
+### Checking fewer devices
+
+`yarn sync <n>` checks only the `n` newest entries on the GSM Arena listing instead of the default 10.
+Useful for a quick check when only the very latest devices matter:
+
+```bash
+yarn sync 3
+```
+
+Combines with dry run: `yarn sync 3 --dry-run`.
+
 ### Dry run
 
 Run the full pipeline (fetch, scrape, build, format) without committing or opening a PR. The generated file is printed instead:

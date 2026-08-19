@@ -59,12 +59,25 @@ function formatToolArgs(args: unknown): string {
   return json.length > MAX_LOGGED_ARG_CHARS ? `${json.slice(0, MAX_LOGGED_ARG_CHARS)}...` : json;
 }
 
-function messageText(content: AIMessage['content']): string {
+function messageText(content: AIMessage['content'] | undefined): string {
   if (typeof content === 'string') return content.trim();
+  // The typings promise string | blocks[], but gateway responses can leave content
+  // undefined at runtime (seen on the final structured-output message), so verify.
+  if (!Array.isArray(content)) return '';
   return content
     .map((block) => ('text' in block && typeof block.text === 'string' ? block.text : ''))
     .join(' ')
     .trim();
+}
+
+// Errors escaping wrapModelCall/wrapToolCall middleware abort the whole graph, so
+// logging is strictly best-effort: a surprise response shape must never kill a run.
+function safeLog(log: () => void): void {
+  try {
+    log();
+  } catch {
+    // Swallow: losing one log line is better than losing the run.
+  }
 }
 
 function elapsedSeconds(startedAt: number): string {
@@ -88,33 +101,42 @@ export function createProgressLoggingMiddleware() {
     name: 'ProgressLogging',
     wrapModelCall: async (request, handler) => {
       turn += 1;
-      console.log(`\n[Turn ${String(turn)}] calling model...`);
+      const thisTurn = turn;
+      safeLog(() => {
+        console.log(`\n[Turn ${String(thisTurn)}] calling model...`);
+      });
       const startedAt = Date.now();
       const response = await handler(request);
-      const toolCalls = response.tool_calls?.length ?? 0;
-      console.log(
-        `[Turn ${String(turn)}] model responded in ${elapsedSeconds(startedAt)} (${String(toolCalls)} tool call(s))`,
-      );
-      const text = messageText(response.content);
-      if (text) console.log(`[Agent] ${text}`);
+      safeLog(() => {
+        const toolCalls = response.tool_calls?.length ?? 0;
+        console.log(
+          `[Turn ${String(thisTurn)}] model responded in ${elapsedSeconds(startedAt)} (${String(toolCalls)} tool call(s))`,
+        );
+        const text = messageText(response.content);
+        if (text) console.log(`[Agent] ${text}`);
+      });
       return response;
     },
     wrapToolCall: async (request, handler) => {
       const { name, args } = request.toolCall;
-      console.log(`  Tool: ${name} ${formatToolArgs(args)}`);
+      safeLog(() => {
+        console.log(`  Tool: ${name} ${formatToolArgs(args)}`);
+      });
       const startedAt = Date.now();
       const result = await handler(request);
-      if (result instanceof ToolMessage && result.status === 'error') {
-        const firstLine =
-          typeof result.content === 'string' ? (result.content.split('\n')[0] ?? '') : '';
-        console.log(`  Tool ${name} FAILED in ${elapsedSeconds(startedAt)}: ${firstLine}`);
-      } else {
-        const size =
-          result instanceof ToolMessage && typeof result.content === 'string'
-            ? `, ${String(result.content.length)} chars`
-            : '';
-        console.log(`  Tool ${name} ok in ${elapsedSeconds(startedAt)}${size}`);
-      }
+      safeLog(() => {
+        if (result instanceof ToolMessage && result.status === 'error') {
+          const firstLine =
+            typeof result.content === 'string' ? (result.content.split('\n')[0] ?? '') : '';
+          console.log(`  Tool ${name} FAILED in ${elapsedSeconds(startedAt)}: ${firstLine}`);
+        } else {
+          const size =
+            result instanceof ToolMessage && typeof result.content === 'string'
+              ? `, ${String(result.content.length)} chars`
+              : '';
+          console.log(`  Tool ${name} ok in ${elapsedSeconds(startedAt)}${size}`);
+        }
+      });
       return result;
     },
   });

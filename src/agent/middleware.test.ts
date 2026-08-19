@@ -112,6 +112,22 @@ describe('createProgressLoggingMiddleware', () => {
     );
   });
 
+  it('survives a model response with undefined content', async () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const { modelHook } = getHooks();
+    const message = new AIMessage({ content: '' });
+    // Gateway responses can leave content undefined at runtime despite the typings;
+    // this crashed the run on the final structured-output turn.
+    Object.assign(message, { content: undefined });
+
+    const result = await modelHook({} as Parameters<typeof modelHook>[0], () =>
+      Promise.resolve(message),
+    );
+
+    expect(result).toBe(message);
+    expect(loggedLines(log).some((l) => l.includes('[Turn 1] model responded in'))).toBe(true);
+  });
+
   it('logs a FAILED line for error ToolMessages', async () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
     const { toolHook } = getHooks();

@@ -2,7 +2,11 @@ import { createAgent } from 'langchain';
 import { HumanMessage } from '@langchain/core/messages';
 import type { ClientTool, ServerTool } from '@langchain/core/tools';
 import { createModel } from './model.js';
-import { createProgressLoggingMiddleware, truncateToolOutputMiddleware } from './middleware.js';
+import {
+  createProgressLoggingMiddleware,
+  retryMalformedModelResponseMiddleware,
+  truncateToolOutputMiddleware,
+} from './middleware.js';
 import { buildSystemPrompt, buildUserMessage } from './prompts.js';
 import { ScrapeResultSchema, type NewDevice, type ScrapeResult } from './schema.js';
 import { CURRENT_YEAR } from '../config.js';
@@ -41,8 +45,13 @@ export async function runScrapeAgent(
     systemPrompt: buildSystemPrompt(knownNames, stopAtName, deviceLimit),
     responseFormat: ScrapeResultSchema,
     // Logging first: the first middleware is outermost, so it sees tool errors after the
-    // truncation middleware has converted them into error ToolMessages.
-    middleware: [createProgressLoggingMiddleware(), truncateToolOutputMiddleware],
+    // truncation middleware has converted them into error ToolMessages. The malformed-
+    // response retry goes last (innermost) so a retried call still logs as one turn.
+    middleware: [
+      createProgressLoggingMiddleware(),
+      truncateToolOutputMiddleware,
+      retryMalformedModelResponseMiddleware,
+    ],
   });
 
   console.log('\nAgent starting...\n');

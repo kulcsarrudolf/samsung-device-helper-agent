@@ -84,6 +84,50 @@ function elapsedSeconds(startedAt: number): string {
   return `${((Date.now() - startedAt) / 1000).toFixed(1)}s`;
 }
 
+// CometAPI sometimes answers HTTP 200 with an empty `choices` array (its way of swallowing
+// an upstream error). ChatOpenAI then crashes with a TypeError at `generations[0][0].message`
+// before any usable response exists, and the openai client's maxRetries never fires because
+// there was no HTTP error. Bound the retries so a persistent fault still fails the run.
+const MALFORMED_RESPONSE_MAX_ATTEMPTS = 3;
+const MALFORMED_RESPONSE_BACKOFF_MS = [2_000, 5_000];
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+/**
+ * Retries model calls that die on a malformed gateway response. A TypeError escaping the
+ * model call means the response shape was unusable (empty choices), not that the request
+ * failed, so a fresh attempt usually succeeds. Any other error is rethrown untouched, and
+ * after the last attempt the TypeError propagates and aborts the run as before.
+ *
+ * Place this last in the middleware list (innermost): the progress logger then logs one
+ * turn per logical model call, with retries happening beneath it.
+ */
+export const retryMalformedModelResponseMiddleware = createMiddleware({
+  name: 'RetryMalformedModelResponse',
+  wrapModelCall: async (request, handler) => {
+    for (let attempt = 1; ; attempt += 1) {
+      try {
+        return await handler(request);
+      } catch (error) {
+        if (!(error instanceof TypeError) || attempt >= MALFORMED_RESPONSE_MAX_ATTEMPTS) {
+          throw error;
+        }
+        const backoffMs = MALFORMED_RESPONSE_BACKOFF_MS[attempt - 1] ?? 5_000;
+        safeLog(() => {
+          console.log(
+            `  Model response was malformed (${error.message}); retrying in ${String(backoffMs / 1000)}s (attempt ${String(attempt + 1)}/${String(MALFORMED_RESPONSE_MAX_ATTEMPTS)})...`,
+          );
+        });
+        await sleep(backoffMs);
+      }
+    }
+  },
+});
+
 /**
  * Logs every model turn and tool call so the terminal shows live progress, mirroring the
  * old bespoke loop's per-iteration output. Without this, agent.invoke runs the whole

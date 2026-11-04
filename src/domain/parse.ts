@@ -1,6 +1,6 @@
 import type { NewDevice } from '../agent/schema.js';
 
-function normalizeName(name: string): string {
+export function normalizeName(name: string): string {
   return name
     .replace(/^Samsung\s+/i, '')
     .toLowerCase()

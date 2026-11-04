@@ -12,15 +12,16 @@ import { runScrapeAgent } from './scrape-agent.js';
 import { fetchCurrentFile, fetchPreviousYearFile, createPR } from '../services/github.js';
 import { regenerateTargetFiles } from '../services/generate.js';
 import { appendToFile, buildNewFile } from '../domain/device.js';
-import { sortByReleaseDate, parseExistingNames, parseLastExistingName } from '../domain/parse.js';
+import {
+  sortByReleaseDate,
+  parseExistingNames,
+  parseLastExistingName,
+  normalizeName,
+} from '../domain/parse.js';
+import { fetchListingEntries, selectNewEntries } from '../services/listing.js';
+import { extractDeviceSpecs } from '../services/spec.js';
+import type { NewDevice } from './schema.js';
 import { GITHUB_TOKEN, CURRENT_YEAR, PREVIOUS_YEAR_FILE_PATH } from '../config.js';
-
-function normalizeName(name: string): string {
-  return name
-    .replace(/^Samsung\s+/i, '')
-    .toLowerCase()
-    .trim();
-}
 
 /** Fetch the current-year file from the target repo and derive existing names + stop marker. */
 async function fetchExisting(): Promise<Partial<SyncStateType>> {
@@ -80,19 +81,66 @@ async function resolveKnownNames(state: SyncStateType): Promise<Partial<SyncStat
   return { knownNames: [...knownNames], stopAtName };
 }
 
-/** Run the scraping agent over freshly launched Playwright MCP tools. */
+/**
+ * Detect and extract new devices deterministically; the agent is a fallback only.
+ * The listing diff (which of the newest entries are missing from our file) is pure string
+ * matching, and the spec fields sit behind stable data-spec attributes, so both run in
+ * code. The LLM is called only for pages the deterministic extraction cannot parse, so a
+ * normal sync, up to date or not, spends no API credits at all.
+ */
 async function scrape(state: SyncStateType): Promise<Partial<SyncStateType>> {
   console.log('\nStarting Playwright MCP server (headless Chromium)...');
   const mcpClient = createPlaywrightMcpClient();
   try {
     const tools = await mcpClient.getTools();
     console.log('   MCP server ready');
-    const newDevices = await runScrapeAgent(
-      tools,
+
+    console.log('\nReading the GSM Arena listing...');
+    const entries = await fetchListingEntries(tools);
+    const candidates = selectNewEntries(
+      entries,
       new Set(state.knownNames),
       state.stopAtName,
       state.deviceLimit,
     );
+    console.log(
+      `   ${String(entries.length)} entries; ${String(candidates.length)} new within the first ${String(state.deviceLimit)}.`,
+    );
+
+    if (candidates.length === 0) {
+      console.log('   All checked devices are already known. Nothing to extract (no LLM calls).');
+      return { newDevices: [] };
+    }
+    candidates.forEach((c) => {
+      console.log(`   ? ${c.name}`);
+    });
+
+    console.log('\nExtracting spec pages deterministically...');
+    const { devices, deferred, fallback } = await extractDeviceSpecs(tools, candidates);
+    devices.forEach((d) => {
+      console.log(
+        `   + ${d.name} (${d.type}) ${d.releaseDate} ${String(d.models.length)} model(s)`,
+      );
+    });
+    deferred.forEach((d) => {
+      console.log(
+        `   ~ ${d.name}: no model codes on GSM Arena yet; deferred until a future sync finds them.`,
+      );
+    });
+
+    let agentDevices: NewDevice[] = [];
+    if (fallback.length > 0) {
+      console.log(
+        `   ${String(fallback.length)} page(s) resisted deterministic extraction; falling back to the agent.`,
+      );
+      agentDevices = await runScrapeAgent(tools, fallback);
+    }
+
+    const currentYear = String(CURRENT_YEAR);
+    const newDevices = [
+      ...devices.filter((d) => d.releaseDate.endsWith(currentYear)),
+      ...agentDevices,
+    ];
     return { newDevices };
   } finally {
     await mcpClient.close();

@@ -87,9 +87,10 @@ function elapsedSeconds(startedAt: number): string {
 // CometAPI sometimes answers HTTP 200 with an empty `choices` array (its way of swallowing
 // an upstream error). ChatOpenAI then crashes with a TypeError at `generations[0][0].message`
 // before any usable response exists, and the openai client's maxRetries never fires because
-// there was no HTTP error. Bound the retries so a persistent fault still fails the run.
-const MALFORMED_RESPONSE_MAX_ATTEMPTS = 3;
-const MALFORMED_RESPONSE_BACKOFF_MS = [2_000, 5_000];
+// there was no HTTP error. The fault is bursty and can outlast short waits (a run died after
+// 2s+5s backoff), so back off up to half a minute. Bounded so a persistent fault still fails.
+const MALFORMED_RESPONSE_MAX_ATTEMPTS = 5;
+const MALFORMED_RESPONSE_BACKOFF_MS = [2_000, 5_000, 15_000, 30_000];
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {
